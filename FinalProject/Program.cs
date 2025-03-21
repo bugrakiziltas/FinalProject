@@ -1,5 +1,7 @@
 using FinalProject.Data;
 using FinalProject.Helpers;
+using FinalProject.Interfaces;
+using FinalProject.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IProductService, ProductService>();  
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+//builder.Services.AddScoped<IOrderService, OrderService>();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultString"));
@@ -41,6 +48,7 @@ app.UseRouting();
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;
+
 try
 {
     var context = services.GetRequiredService<ApplicationDbContext>();

@@ -1,0 +1,55 @@
+﻿@* @using DotNetECommerce.Domain.Entities
+@model Product
+
+
+<h1 class="text-center title-font my-2">@Model.Name</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 pe-5 text-center">
+            <div id="carouselExampleAutoplaying" class="carousel slide " data-bs-ride="carousel">
+                <div class="carousel-inner mt-3">
+                    <div class="carousel-item mt-1 active" data-bs-interval="5000">
+                        <span>
+                            <div>
+                                <img src="@Model.ImageUrl" class="w-100 cards rounded rounded-5" style="object-fit: cover; max-height:500px;">
+                            </div>
+                        </span>
+                    </div>
+                </div>
+                <button class="carousel-control-prev " type="button" data-bs-target="#carouselExampleAutoplaying" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon rounded-1 hover-effect" style="background-color:#151515" aria-hidden="true"></span>
+                    <span class="visually-hidden ">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleAutoplaying"
+                        data-bs-slide="next">
+                    <span class="carousel-control-next-icon rounded-1 hover-effect" aria-hidden="true"
+                          style="background-color:#151515"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-8 text-start mt-4">
+            <h6 class="my-3">@Model.Description</h6>
+            <div class="row">
+                <div class="col-md-4  col-lg-4 ">
+                    <h5>Price: @Model.Price</h5>
+                </div>
+                <div class="col-md-4">
+                    <h5>Size: M</h5>
+                </div>
+                <div class="col-md-4">
+                    <h5>Color: Lorem ipsum dolor sit, amet consectetur ?</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <a href="#" data-translate-key="addToCard"
+                       class="text-decoration-none btn btn-dark">
+                        Add
+                        to Card
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> *@

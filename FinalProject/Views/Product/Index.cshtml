@@ -1,0 +1,27 @@
+﻿@using FinalProject.Entities
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="container py-5">
+    <h2 class="text-center mb-4">Product Listing</h2>
+    @foreach (var product in Model.OrderBy(r => r.Name))
+    {
+        <div class="row">
+            <!-- Product Card -->
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card">
+                    <img src="@product.ImageUrl" class="card-img-top" alt="Product Image">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text">@product.Description</p>
+                        <p class="fw-bold">@product.Price</p>
+                        <a href="#" class="btn btn-primary">Buy Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+</div>

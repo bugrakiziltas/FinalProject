@@ -1,0 +1,37 @@
+﻿@model FinalProject.Dtos.Product.CreateProductDto
+
+<h2 class="mb-4">Add a New Product</h2>
+
+<form asp-action="AddProduct" asp-controller="Product" method="post" class="needs-validation col-5" novalidate>
+    <div class="form-group">
+        <label asp-for="Name" class="form-label">Name</label>
+        <input asp-for="Name" class="form-control" required>
+        <div class="invalid-feedback">Title is required.</div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Price" class="form-label">Price</label>
+        <textarea asp-for="Price" class="form-control" rows="5" required></textarea>
+        <div class="invalid-feedback">Price are required.</div>
+    </div>
+
+@*     <div class="form-group">
+        <label asp-for="CategoryId" class="form-label">CategoryId</label>
+        <textarea asp-for="CategoryId" class="form-control" rows="5" required></textarea>
+        <div class="invalid-feedback">CategoryName are required.</div>
+    </div> *@
+
+    <div class="form-group">
+        <label asp-for="Description" class="form-label">Description</label>
+        <textarea asp-for="Description" class="form-control" rows="5" required></textarea>
+        <div class="invalid-feedback">Description is required.</div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ImageUrl" class="form-label">ImageUrl</label>
+        <input asp-for="ImageUrl" class="form-control" required>
+        <div class="invalid-feedback">ImageUrl is required.</div>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Add Product</button>
+</form>
