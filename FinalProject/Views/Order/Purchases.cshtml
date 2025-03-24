@@ -1,0 +1,30 @@
+﻿@model List<Order>
+
+<h2>My Purchases</h2>
+
+@if (!Model.Any())
+{
+    <p>No purchases found.</p>
+}
+else
+{
+    @foreach (var order in Model)
+    {
+        <div class="card my-3">
+            <div class="card-header">
+                <strong>Order Date:</strong> @order.CreatedOn
+            </div>
+            <div class="card-body">
+                <ul>
+                    @foreach (var item in order.BuyedProducts)
+                    {
+                        <li>
+                            <strong>@item.Name</strong> - $@item.Price
+                        </li>
+                    }
+                </ul>
+                <p><strong>Total:</strong> $@order.Total</p>
+            </div>
+        </div>
+    }
+}

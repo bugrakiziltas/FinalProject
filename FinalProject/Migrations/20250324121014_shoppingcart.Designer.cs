@@ -4,6 +4,7 @@ using FinalProject.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinalProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250324121014_shoppingcart")]
+    partial class shoppingcart
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,49 +24,6 @@ namespace FinalProject.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("FinalProject.Entities.Order", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("CreatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("CreatedOn")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedByUserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedOn")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("IdentityUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("IdentityUserId1")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ModifiedByUserId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("ModifiedOn")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IdentityUserId1");
-
-                    b.ToTable("Orders");
-                });
 
             modelBuilder.Entity("FinalProject.Entities.Product", b =>
                 {
@@ -110,17 +70,13 @@ namespace FinalProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<string>("Price")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IdentityUserId1");
-
-                    b.HasIndex("OrderId");
 
                     b.ToTable("Products");
                 });
@@ -368,24 +324,11 @@ namespace FinalProject.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("FinalProject.Entities.Order", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "IdentityUser")
-                        .WithMany()
-                        .HasForeignKey("IdentityUserId1");
-
-                    b.Navigation("IdentityUser");
-                });
-
             modelBuilder.Entity("FinalProject.Entities.Product", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "IdentityUser")
                         .WithMany()
                         .HasForeignKey("IdentityUserId1");
-
-                    b.HasOne("FinalProject.Entities.Order", null)
-                        .WithMany("BuyedProducts")
-                        .HasForeignKey("OrderId");
 
                     b.Navigation("IdentityUser");
                 });
@@ -456,11 +399,6 @@ namespace FinalProject.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("FinalProject.Entities.Order", b =>
-                {
-                    b.Navigation("BuyedProducts");
                 });
 #pragma warning restore 612, 618
         }

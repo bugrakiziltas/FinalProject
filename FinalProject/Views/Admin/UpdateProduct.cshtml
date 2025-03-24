@@ -1,0 +1,59 @@
+﻿@model UpdateProductDto
+<div class="container mt-4">
+    <h2 class="text-center text-primary">Ürünü Güncelle</h2>
+    <form asp-controller="Admin" enctype="multipart/form-data" asp-action="UpdateProduct" method="post" class="border p-4 shadow-lg bg-light rounded">
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label fw-bold"> Name</label>
+            <input asp-for="Name" class="form-control border-primary">
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label fw-bold"> Description</label>
+            <textarea asp-for="Description" class="form-control border-primary" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Price" class="form-label fw-bold">Price</label>
+            <input asp-for="Price" class="form-control" type="number" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 text-center">
+            <label class="fw-bold text-primary">Mevcut Ürün Fotoğrafı:</label>
+            <br />
+            <img id="currentImage" src="~/Images/@ViewBag.ImageUrl" alt="Current Image" class="img-thumbnail shadow" style="max-width: 300px;" />
+        </div>
+
+        <div class="mb-3">
+            <label for="imageUpload" class="text-danger fw-bold">Yeni Fotoğraf Yükleyin:</label>
+            <input asp-for="Image" class="form-control border-danger" id="imageUpload" onchange="showImagePreview(event)" />
+            <img id="imagePreview" src="#" alt="Selected Image" class="img-thumbnail shadow mt-2" style="display: none; max-width: 300px;" />
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success btn-lg shadow">Save the Changes</button>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    function showImagePreview(event) {
+        var imagePreview = document.getElementById('imagePreview');
+        var file = event.target.files[0];
+
+        if (file) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = "block";
+            }
+
+            reader.readAsDataURL(file);
+        }
+    }
+</script>

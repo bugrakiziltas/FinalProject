@@ -5,15 +5,22 @@ using FinalProject.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<IEmailSender, EmailSender>();
-builder.Services.AddScoped<IProductService, ProductService>();  
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-//builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductService, FinalProject.Services.ProductService>(); 
+builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
+builder.Services.AddScoped<IIdentityService, FinalProject.Services.IdentityService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+builder.Configuration.AddUserSecrets<Program>().AddEnvironmentVariables();
+var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+StripeConfiguration.ApiKey = stripeSecretKey;
+
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -41,10 +48,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseAuthentication();
-app.UseAuthorization();
 app.MapRazorPages();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 using var scope = app.Services.CreateScope();
 var services = scope.ServiceProvider;

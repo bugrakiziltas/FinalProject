@@ -1,10 +1,16 @@
-﻿namespace FinalProject.Dtos.Product
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FinalProject.Dtos.Product
 {
     public class UpdateProductDto
     {
+        public Guid Id { get; set; }
+        [Required(ErrorMessage = "Ürün adı boş olamaz")]
         public string Name { get; set; }
+        [Required(ErrorMessage = "Ürün açıklaması boş olamaz")]
         public string Description { get; set; }
-        public string Price { get; set; }
-        public string ImageUrl { get; set; }
+        [Required(ErrorMessage = "Ürün fiyatı boş olamaz")]
+        public decimal Price { get; set; }
+        public IFormFile? Image { get; set; }
     }
 }

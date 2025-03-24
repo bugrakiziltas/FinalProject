@@ -1,4 +1,5 @@
-﻿using FinalProject.Helpers;
+﻿using FinalProject.Entities;
+using FinalProject.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,12 +46,49 @@ namespace FinalProject.Data
             if (customer == null)
             {
                 customer = new IdentityUser { UserName = custEmail, Email = custEmail };
-                var createCustResult = await userManager.CreateAsync(customer, "Crm123!");
+                var createCustResult = await userManager.CreateAsync(customer, "Cust123!");
                 if (createCustResult.Succeeded)
                 {
                     await userManager.AddToRoleAsync(customer, SD.Role_Cust);
                 }
             }
+            var productList = new List<Product>()
+            {
+                new Entities.Product
+                {
+                    Name="furniture1",
+                    Description="Godlike furniture1",
+                    Price=200,
+                    ImageUrl="furniture1.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Entities.Product
+                {
+                    Name="furniture2",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="furniture2.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Entities.Product
+                {
+                    Name="furniture2",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="furniture3.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+            };
+            context.Products.AddRange(productList);
             context.SaveChanges();
         }
     }

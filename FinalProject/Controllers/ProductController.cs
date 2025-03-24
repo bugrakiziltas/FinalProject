@@ -2,9 +2,11 @@
 using FinalProject.Dtos.Product;
 using FinalProject.Entities;
 using FinalProject.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FinalProject.Controllers
 {
@@ -12,14 +14,16 @@ namespace FinalProject.Controllers
     {
 
         private readonly IProductService _productService;
+        private readonly IShoppingCartRepository _shoppingCartRepository;
         private readonly IIdentityService _identityService;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ApplicationDbContext _applicationDbContext;
         //private readonly ICategoryService _categoryService;
 
-        public ProductController(IProductService productService, IIdentityService identityService, UserManager<IdentityUser> userManager, ApplicationDbContext applicationDbContext)
+        public ProductController(IProductService productService, IShoppingCartRepository shoppingCartRepository ,IIdentityService identityService, UserManager<IdentityUser> userManager, ApplicationDbContext applicationDbContext)
         {
             _productService = productService;
+            _shoppingCartRepository = shoppingCartRepository;
             _identityService = identityService;
             _userManager = userManager;
             _applicationDbContext = applicationDbContext;
@@ -53,9 +57,10 @@ namespace FinalProject.Controllers
 
         [HttpGet]
         [Route("details/{id}")]
-        public IActionResult ProductDetailPage(Guid id)
+        public async Task<IActionResult> ProductDetailPage(Guid id)
         {
             var product = _applicationDbContext.Products.FirstOrDefault(x => x.Id == id);
+
             return View(product);
 
         }
@@ -70,59 +75,22 @@ namespace FinalProject.Controllers
         //}
 
         [HttpPost]
-        public async Task<IActionResult> AddProductAsync(CreateProductDto createProductDto)
+        [Authorize]
+        public async Task<IActionResult> AddToCart(Product product)
         {
-            var applicationUser = await _userManager.GetUserAsync(User);
-
-            //var category = _applicationDbContext.Categories.FirstOrDefault(x => x.Id == Guid.Parse(createProductDto.CategoryId));
-
-            ////category ??= new Category { Name = createProductDto.CategoryId, Id = Guid.NewGuid() };
-
-            ////if (category == null)
-            ////{
-            ////    category = new Category { Name = createProductDto.CategoryName, Id = Guid.NewGuid() };
-
-            ////    //_applicationDbContext.Add(_category);
-            ////    //_applicationDbContext.SaveChanges();
-            ////}
-
-            Product product = new()
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var identityUser = await _identityService.GetUserByIdAsync(userId);
+            var shoppingCartItem = new ShoppingCart
             {
-                Id = Guid.NewGuid(),
-                Name = createProductDto.Name,
-                Price = createProductDto.Price,
-                Description = createProductDto.Description,
-                ImageUrl = createProductDto.ImageUrl,
-                CreatedByUserId = Guid.Parse(applicationUser.Id),
-                IdentityUser = applicationUser,
-                IdentityUserId = Guid.Parse(applicationUser.Id),
-                CreatedOn = DateTimeOffset.UtcNow,
+                ProductId = product.Id,
+                IdentityUserId = Guid.Parse(userId),
             };
-
-            //category.ProductCategories.Add(new ProductCategory 
-            //{ 
-            //    Product = product, 
-            //    CategoryId = category.Id,
-            //    ProductId = product.Id, 
-            //    Category = category 
-            //});
-
-            try
+            if (await _shoppingCartRepository.AddToCart(shoppingCartItem) == true)
             {
-                _applicationDbContext.Add(product);
-                _applicationDbContext.SaveChanges();
-
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index");
             }
-            catch (Exception)
-            {
-                return RedirectToAction(nameof(Index));
-            }
-
-            //var fileId = await _blobService.UploadAsync(file.OpenReadStream(), "documents", file.ContentType, cancellationToken);
-
-
-
+            return BadRequest("Something went wrong");
         }
     }
     }

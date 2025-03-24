@@ -28,16 +28,16 @@ namespace FinalProject.Services
         }
 
 
-        public async Task<bool> CreateProductAsync(CreateProductDto createProductDto, string createdByUserName)
+        public async Task<bool> CreateProductAsync(CreateProductDto createProductDto, string createdByUserId, string imageUrl)
         {
-            var applicationUser = await _identityService.GetUserByUserNameAsync(createdByUserName);
+            var applicationUser = await _identityService.GetUserByIdAsync(createdByUserId);
 
             Product product = new()
             {
                 Id = Guid.NewGuid(),
                 Name = createProductDto.Name,
                 Description = createProductDto.Description,
-                ImageUrl = createProductDto.ImageUrl,
+                ImageUrl = imageUrl,
                 Price = createProductDto.Price,
                 CreatedByUserId = Guid.Parse(applicationUser.Id),
                 IdentityUser = applicationUser,
@@ -46,30 +46,42 @@ namespace FinalProject.Services
             };
 
             _applicationDbContext.Add(product);
-            _applicationDbContext.SaveChanges();
+            if (_applicationDbContext.SaveChanges() > 0)
+            {
+                return true;
+            }
 
-            return true;
+            return false;
         }
 
-        public async Task<bool> UpdateProductAsync(UpdateProductDto updateProductDto, Guid productId, string createdByUserName, CancellationToken cancellationToken)
+        public async Task<bool> UpdateProductAsync(UpdateProductDto updateProductDto, string imageUrl, string createdByUserId, CancellationToken cancellationToken)
         {
-            var product = await _applicationDbContext.Products.Where(x => x.Id == productId).SingleOrDefaultAsync(cancellationToken);
+            var product = await _applicationDbContext.Products.Where(x => x.Id == updateProductDto.Id).SingleOrDefaultAsync(cancellationToken);
 
             if (product == null)
             {
                 return false;
             }
 
-            var applicationUser = await _identityService.GetUserByUserNameAsync(createdByUserName);
+            var applicationUser = await _identityService.GetUserByIdAsync(createdByUserId);
 
-            if (product == null)
+            if (applicationUser == null)
             {
                 return false;
             }
+            if(imageUrl != String.Empty)
+            {
+                string uploadsFolder = Path.Combine("wwwroot/Images");
+                string serverFolder = Path.Combine(uploadsFolder, imageUrl);
 
+                using (var stream = new FileStream(serverFolder, FileMode.Create))
+                {
+                    updateProductDto.Image.CopyTo(stream);
+                }
+                product.ImageUrl = imageUrl;
+            }
             product.Name = updateProductDto.Name;
             product.Price = updateProductDto.Price;
-            product.ImageUrl = updateProductDto.ImageUrl;
             product.Description = updateProductDto.Description;
 
             _applicationDbContext.Update(product);
