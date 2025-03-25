@@ -1,0 +1,163 @@
+﻿@model List<VoiceMessageModel>
+
+@{
+    ViewData["Title"] = "Chat";
+    var receiverId = ViewBag.ChatWithUserId;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <title>@ViewData["Title"]</title>
+</head>
+<body class="bg-gray-100">
+    <div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden h-[90vh] flex flex-col">
+        <!-- Chat Header -->
+        <div class="bg-blue-600 text-white p-4 shadow-md flex items-center">
+            <img src="/api/placeholder/40/40" alt="Profile" class="w-10 h-10 rounded-full mr-3">
+            <div>
+                <h2 class="font-semibold text-lg">Chat</h2>
+                <p class="text-xs text-blue-200">Online</p>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <ul id="messagesList" class="flex-grow overflow-y-auto p-4 space-y-3">
+            @foreach (var message in Model)
+            {
+                <div class="flex @(message.ReceiverId == receiverId.ToString() ? "justify-end" : "justify-start")">
+                    <div class="@(message.ReceiverId == receiverId.ToString()
+                        ? "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl"
+                        : "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl")
+                        max-w-[80%] p-3 shadow-sm">
+                        @if(message.Product!=null){
+                            <div class="flex items-center mb-2 space-x-3">
+
+                                @if(!string.IsNullOrEmpty( message.Product.ImageUrl)){
+                                <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-16 h-16 object-cover rounded-lg"/>
+                                }
+                                <div>
+
+                        <p class="font-semibold">@message.Product.Name</p>
+                    </div>
+
+                </div>
+            }
+                        <div class="flex items-center space-x-2 mb-2">
+                            <audio controls class="w-full">
+                                <source src="@message.AudioFilePath" type="audio/webm">
+                                Your browser does not support the audio tag.
+                            </audio>
+                        </div>
+                        <span class="text-xs opacity-70 block text-right">
+                            @message.Created.ToString("t")
+                        </span>
+                    </div>
+                </div>
+            }
+        </ul>
+
+        <!-- Recording Controls -->
+        <form id="uploadForm" method="post" enctype="multipart/form-data"
+              asp-controller="Chat"
+              asp-action="UploadVoiceMessage"
+              class="p-4 bg-white border-t flex items-center space-x-2">
+            <input type="hidden" name="receiverId" value="@receiverId" />
+            <input type="hidden" name="productId" value="@ViewBag.productId" />
+            <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
+
+            <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition">
+                🎤 Record
+            </button>
+            <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50">
+                ⏹️ Stop
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        const startRecordBtn = document.getElementById('startRecord');
+        const stopRecordBtn = document.getElementById('stopRecord');
+        const audioInput = document.getElementById('audioInput');
+        const messagesList = document.getElementById('messagesList');
+
+        startRecordBtn.addEventListener("click", async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                startRecordBtn.disabled = true;
+                startRecordBtn.classList.add('opacity-50');
+                stopRecordBtn.disabled = false;
+                stopRecordBtn.classList.remove('opacity-50');
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        });
+
+        stopRecordBtn.addEventListener("click", () => {
+            mediaRecorder.stop();
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                audioInput.files = dataTransfer.files;
+
+                document.getElementById("uploadForm").submit();
+
+                // Reset UI
+                startRecordBtn.disabled = false;
+                startRecordBtn.classList.remove('opacity-50');
+                stopRecordBtn.disabled = true;
+                stopRecordBtn.classList.add('opacity-50');
+            };
+
+            audioChunks = [];
+        });
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+        connection.on("ReceiveMessage", (senderId, filePath) => {
+            const listItem = document.createElement("li");
+            listItem.className = "flex justify-start";
+
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-3 shadow-sm";
+
+            const audio = document.createElement("audio");
+            audio.src = filePath;
+            audio.controls = true;
+            audio.className = "w-full mb-2";
+
+            const timestamp = document.createElement("span");
+            timestamp.className = "text-xs opacity-70 block text-right";
+            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            messageDiv.appendChild(audio);
+            messageDiv.appendChild(timestamp);
+            listItem.appendChild(messageDiv);
+
+            messagesList.appendChild(listItem);
+
+            // Scroll to bottom
+            messagesList.scrollTop = messagesList.scrollHeight;
+        });
+
+        connection.start().catch(err => console.error(err));
+    </script>
+</body>
+</html>

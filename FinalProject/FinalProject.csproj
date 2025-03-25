@@ -24,4 +24,8 @@
     <PackageReference Include="Stripe.net" Version="47.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\voice_messages\" />
+  </ItemGroup>
+
 </Project>

@@ -16,6 +16,7 @@ builder.Services.AddScoped<IProductService, FinalProject.Services.ProductService
 builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
 builder.Services.AddScoped<IIdentityService, FinalProject.Services.IdentityService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddSignalR();
 
 builder.Configuration.AddUserSecrets<Program>().AddEnvironmentVariables();
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
@@ -69,7 +70,7 @@ catch (Exception ex)
     var logger = services.GetService<ILogger<Program>>();
     logger.LogError(ex, "An error occured during migration");
 }
-
+app.MapHub<ChatHub>("/chathub");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
