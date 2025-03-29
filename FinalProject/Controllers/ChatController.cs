@@ -29,7 +29,7 @@ namespace FinalProject.Controllers
         [HttpGet]
         [Route("/chat")]
         public async Task<IActionResult> Chat(Guid chatWithUserId, Guid productId)
-        {
+        {   
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var userId = Guid.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
 
