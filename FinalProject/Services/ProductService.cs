@@ -23,6 +23,7 @@ namespace FinalProject.Services
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
             var products = await _applicationDbContext.Products.ToListAsync();
+            var categories = await _applicationDbContext.Categories.ToListAsync();
 
             return products;
         }

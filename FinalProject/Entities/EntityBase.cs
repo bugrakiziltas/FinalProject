@@ -1,6 +1,6 @@
-﻿using DotNetECommerce.Domain.Common;
+﻿using FinalProject.Entities;
 
-namespace DotNetECommerce.Domain.Entities
+namespace FiinalProject.Entities
 {
     public abstract class EntityBase<TKey> : IEntityBase<TKey>
     {

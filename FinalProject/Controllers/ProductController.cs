@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace FinalProject.Controllers
@@ -40,39 +41,49 @@ namespace FinalProject.Controllers
         }
 
         [HttpGet]
-        public IActionResult AddProduct()
-        {
-            var createProductDto = new CreateProductDto();
-            return View(createProductDto);
-
-        }
-
-        //[HttpGet]
-        //public async Task<IActionResult> CategoryIndexAsync()
-        //{
-        //    var cat = await _categoryService.GetAllCategoriesAsync();
-        //    return View(cat);
-
-        //}
-
-        [HttpGet]
         [Route("details/{id}")]
         public async Task<IActionResult> ProductDetailPage(Guid id)
         {
+            // TODO : Make this async by adding await
             var product = _applicationDbContext.Products.FirstOrDefault(x => x.Id == id);
 
             return View(product);
 
         }
 
-        //[HttpGet]
-        //[Route("categories/{categoryName}")]
-        //public IActionResult ProductCategoryPage(string categoryName)
-        //{
-        //    var products = _applicationDbContext.Products.Where(x => x.Category.Name == categoryName).ToList();
-        //    return View(products);
+        [HttpGet]
+        [Route("category/{categoryName}")]
+        public IActionResult CategoryIndex(string categoryName)
+        {
+            // TODO : Check categoryName is valid
+            var products = _applicationDbContext.Products.Include(x=> x.Category).Where(x => x.Category.CategoryName == categoryName).ToList();
+            return View(products);
 
-        //}
+        }
+
+        [HttpGet]
+        [Route("search")]
+        public IActionResult SearchProducts(string searchTerm)
+        {
+            var products = _applicationDbContext.Products.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                products = products.Where(p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm));
+            }
+
+            return View(products);
+
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult AddProduct()
+        {
+            var createProductDto = new CreateProductDto();
+            return View(createProductDto);
+
+        }
 
         [HttpPost]
         [Authorize]
@@ -92,5 +103,16 @@ namespace FinalProject.Controllers
             }
             return BadRequest("Something went wrong");
         }
+
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> CategoryIndexAsync()
+        //{
+        //    var cat = await _categoryService.GetAllCategoriesAsync();
+        //    return View(cat);
+
+        //}
+
     }
-    }
+}

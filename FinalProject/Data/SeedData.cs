@@ -31,7 +31,7 @@ namespace FinalProject.Data
                 }
             }
             var crmEmail = "crm@gmail.com";
-            var crmUser= await userManager.FindByNameAsync(crmEmail);
+            var crmUser = await userManager.FindByNameAsync(crmEmail);
             if (crmUser == null)
             {
                 crmUser = new IdentityUser { UserName = crmEmail, Email = crmEmail };
@@ -54,40 +54,160 @@ namespace FinalProject.Data
             }
             var productList = new List<Product>()
             {
-                new Entities.Product
+                new Product
                 {
-                    Name="furniture1",
+                    Name="Man Tshirt",
                     Description="Godlike furniture1",
                     Price=200,
-                    ImageUrl="furniture1.jpg",
+                    ImageUrl="product-item-1.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
                     IdentityUser = adminUser,
                     IdentityUserId = Guid.Parse(adminUser.Id),
                     CreatedOn = DateTimeOffset.UtcNow,
                 },
-                new Entities.Product
+                new Product
                 {
-                    Name="furniture2",
+                    Name="Man Pant",
                     Description="Godlike furniture2",
                     Price=200,
-                    ImageUrl="furniture2.jpg",
+                    ImageUrl="product-item-2.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
                     IdentityUser = adminUser,
                     IdentityUserId = Guid.Parse(adminUser.Id),
                     CreatedOn = DateTimeOffset.UtcNow,
                 },
-                new Entities.Product
+                new Product
                 {
-                    Name="furniture2",
+                    Name="Man Sweatshirt",
                     Description="Godlike furniture2",
                     Price=200,
-                    ImageUrl="furniture3.jpg",
+                    ImageUrl="product-item-3.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },new Product
+                {
+                    Name="Woman Tshirt",
+                    Description="Godlike furniture1",
+                    Price=200,
+                    ImageUrl="product-item-4.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Product
+                {
+                    Name="Woman Dress",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="product-item-5.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Product
+                {
+                    Name="Woman Shoes",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="product-item-6.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },new Product
+                {
+                    Name="Watch",
+                    Description="Godlike furniture1",
+                    Price=200,
+                    ImageUrl="product-item-7.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Product
+                {
+                    Name="Necklace",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="product-item-8.jpg",
+                    CreatedByUserId = Guid.Parse(adminUser.Id),
+                    IdentityUser = adminUser,
+                    IdentityUserId = Guid.Parse(adminUser.Id),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                },
+                new Product
+                {
+                    Name="Earrings",
+                    Description="Godlike furniture2",
+                    Price=200,
+                    ImageUrl="product-item-9.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
                     IdentityUser = adminUser,
                     IdentityUserId = Guid.Parse(adminUser.Id),
                     CreatedOn = DateTimeOffset.UtcNow,
                 },
             };
+
+            var categoryList = new List<Category>()
+            {
+                    new Category
+                    {
+                        CategoryName = "Man",
+                        Products = new List<Product> { productList[0],productList[1],productList[2] },
+                        CreatedByUserId = Guid.Parse(adminUser.Id),
+                        CreatedOn = DateTimeOffset.UtcNow,
+
+                    },
+                    new Category
+                    {
+                        CategoryName = "Woman",
+                        Products = new List<Product> { productList[3],productList[4],productList[5] },
+                        CreatedByUserId = Guid.Parse(adminUser.Id),
+
+
+                    },
+                    new Category
+                    {
+                        CategoryName = "Accessories",
+                        Products = new List<Product> { productList[6], productList[7], productList[8] } ,
+                        CreatedByUserId = Guid.Parse(adminUser.Id),
+
+                    },
+            };
+
+            productList[0].Category = categoryList[0];
+            productList[0].CategoryId = categoryList[0].Id;
+
+            productList[1].Category = categoryList[0];
+            productList[1].CategoryId = categoryList[0].Id;
+
+            productList[2].Category = categoryList[0];
+            productList[2].CategoryId = categoryList[0].Id;
+
+            productList[3].Category = categoryList[1];
+            productList[3].CategoryId = categoryList[1].Id;
+
+            productList[4].Category = categoryList[1];
+            productList[4].CategoryId = categoryList[1].Id;
+
+            productList[5].Category = categoryList[1];
+            productList[5].CategoryId = categoryList[1].Id;
+
+            productList[6].Category = categoryList[2];
+            productList[6].CategoryId = categoryList[2].Id;
+
+            productList[7].Category = categoryList[2];
+            productList[7].CategoryId = categoryList[2].Id;
+
+            productList[8].Category = categoryList[2];
+            productList[8].CategoryId = categoryList[2].Id;
+
+            context.Categories.AddRange(categoryList);
             context.Products.AddRange(productList);
             context.SaveChanges();
         }

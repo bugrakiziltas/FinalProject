@@ -1,10 +1,7 @@
 ﻿@using FinalProject.Entities
 @model IEnumerable<Product>
-@{
-    ViewData["Title"] = "Products";
-}
 
-<h2 class="text-center mb-4">Products</h2>
+<h2 class="text-center mb-4">@Model.FirstOrDefault().Category.CategoryName</h2>
 <div class="container">
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
         @foreach (var product in Model.OrderBy(r => r.Name))
@@ -17,13 +14,12 @@
                         <p class="card-text">@product.Description</p>
                         <p class="fw-bold">@product.Price.ToString("c")</p>
                         <a asp-controller="Product" asp-action="ProductDetailPage" asp-route-id="@product.Id" class="btn btn-primary mb-2">Detail</a>
-             @*            <form asp-controller="Product" asp-action="AddToCart" method="post" class="mt-auto">
-                            <button type="submit" class="btn btn-success w-100">Add To Cart</button>
-                        </form> *@
+                        @*            <form asp-controller="Product" asp-action="AddToCart" method="post" class="mt-auto">
+                    <button type="submit" class="btn btn-success w-100">Add To Cart</button>
+                    </form> *@
                     </div>
                 </div>
             </div>
         }
     </div>
 </div>
-

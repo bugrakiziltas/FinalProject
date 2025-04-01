@@ -1,5 +1,5 @@
 ﻿
-using DotNetECommerce.Domain.Entities;
+using FiinalProject.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace FinalProject.Entities
@@ -11,13 +11,11 @@ namespace FinalProject.Entities
         public decimal Price { get; set; }
         public string ImageUrl { get; set; }
 
-
         public Guid IdentityUserId { get; set; }
         public IdentityUser IdentityUser { get; set; }
 
-
-        //public Guid CategoryId { get; set; }
-        //public Category Category { get; set; }
+        public Guid CategoryId { get; set; }
+        public Category Category { get; set; }
 
 
     }

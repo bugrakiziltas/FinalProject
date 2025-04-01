@@ -1,4 +1,4 @@
-﻿namespace DotNetECommerce.Domain.Common
+﻿namespace FinalProject.Entities
 {
     public interface IEntityBase<T>
     {
