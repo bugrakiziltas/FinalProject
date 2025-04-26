@@ -48,6 +48,10 @@
                                 <source src="@message.AudioFilePath" type="audio/webm">
                                 Your browser does not support the audio tag.
                             </audio>
+                            @if (message.Emotion != null)
+                            {
+                                <span class="text-sm text-gray-500 italic">@message.Emotion</span>
+                            }
                         </div>
                         <span class="text-xs opacity-70 block text-right">
                             @message.Created.ToString("t")

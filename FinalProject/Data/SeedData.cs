@@ -57,7 +57,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Man Tshirt",
-                    Description="Godlike furniture1",
+                    Description="Man Tshirt",
                     Price=200,
                     ImageUrl="product-item-1.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -68,7 +68,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Man Pant",
-                    Description="Godlike furniture2",
+                    Description="Man Pant",
                     Price=200,
                     ImageUrl="product-item-2.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -79,7 +79,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Man Sweatshirt",
-                    Description="Godlike furniture2",
+                    Description="Man SweatShirt",
                     Price=200,
                     ImageUrl="product-item-3.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -89,7 +89,7 @@ namespace FinalProject.Data
                 },new Product
                 {
                     Name="Woman Tshirt",
-                    Description="Godlike furniture1",
+                    Description="Woman Tshirt",
                     Price=200,
                     ImageUrl="product-item-4.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -100,7 +100,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Woman Dress",
-                    Description="Godlike furniture2",
+                    Description="Woman Dress",
                     Price=200,
                     ImageUrl="product-item-5.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -111,7 +111,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Woman Shoes",
-                    Description="Godlike furniture2",
+                    Description="Woman Shoes",
                     Price=200,
                     ImageUrl="product-item-6.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -121,7 +121,7 @@ namespace FinalProject.Data
                 },new Product
                 {
                     Name="Watch",
-                    Description="Godlike furniture1",
+                    Description="Watch",
                     Price=200,
                     ImageUrl="product-item-7.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -132,7 +132,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Necklace",
-                    Description="Godlike furniture2",
+                    Description="Necklace",
                     Price=200,
                     ImageUrl="product-item-8.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
@@ -143,7 +143,7 @@ namespace FinalProject.Data
                 new Product
                 {
                     Name="Earrings",
-                    Description="Godlike furniture2",
+                    Description="Earrings",
                     Price=200,
                     ImageUrl="product-item-9.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),

@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using NuGet.Protocol.Plugins;
 using Stripe;
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace FinalProject.Controllers
@@ -58,33 +59,88 @@ namespace FinalProject.Controllers
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var senderId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(audioFile.FileName)}";
-            var filePath = Path.Combine("wwwroot/voice_messages", fileName);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            var tempWebmFileName = $"{Guid.NewGuid()}.webm";
+            var tempWebmFilePath = Path.Combine("wwwroot/voice_messages", tempWebmFileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(tempWebmFilePath)!);
+
+            using (var stream = new FileStream(tempWebmFilePath, FileMode.Create))
             {
                 await audioFile.CopyToAsync(stream);
             }
+
+
+            var wavFileName = $"{Guid.NewGuid()}.wav";
+            var wavFilePath = Path.Combine("wwwroot/voice_messages", wavFileName);
+
+            var ffmpegPath = @"C:\ffmpeg\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe";
+
+            var arguments = $"-i \"{tempWebmFilePath}\" \"{wavFilePath}\"";
+
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = ffmpegPath,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using (var process = Process.Start(processInfo))
+            {
+                string output = await process.StandardOutput.ReadToEndAsync();
+                string error = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode != 0)
+                {
+                    return StatusCode(500, $"Audio conversion failed: {error}");
+                }
+            }
+
+            System.IO.File.Delete(tempWebmFilePath);
 
             var voiceMessage = new VoiceMessageModel
             {
                 SenderId = senderId,
                 ReceiverId = receiverId.ToString(),
-                AudioFilePath = $"/voice_messages/{fileName}",
+                AudioFilePath = $"/voice_messages/{wavFileName}",
                 Created = DateTime.UtcNow,
                 ProductId = productId
             };
+            // If sender is a customer, run Speech Emotion Recognition
+            if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
+            {
+                var client = new SpeechEmotionRecognition("http://127.0.0.1:5001");
 
+                if (await client.IsApiHealthyAsync())
+                {
+                    Console.WriteLine("API is running and healthy!");
+                    // you can debug here to see emotion
+                    var emotionResult = await client.RecognizeEmotionAsync(wavFilePath);
+                    voiceMessage.Emotion = emotionResult;
+                }
+                else
+                {
+                    Console.WriteLine("API is not available. Please check if the Flask service is running.");
+                }
+            }
             _context.VoiceMessageModels.Add(voiceMessage);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.User(receiverId.ToString()).SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath);
-            if(await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
+            await _hubContext.Clients.User(receiverId.ToString())
+                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath);
+
+
+            if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
-                return RedirectToAction("Chat", new { chatWithUserId = receiverId , productId = productId});
+                return RedirectToAction("Chat", new { chatWithUserId = receiverId, productId = productId });
             }
-            return RedirectToAction("ChatDetail", new { userId = receiverId, productId=productId });
+
+            return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
         }
+
 
         [Authorize(Roles = "CRM")]
         public async Task<IActionResult> CRMChats()

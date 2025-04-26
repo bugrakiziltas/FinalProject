@@ -17,5 +17,6 @@ namespace FinalProject.Entities
         public Product Product { get; set; }
         public string AudioFilePath { get; set; }
         public DateTime Created { get; set; }
+        public string? Emotion { get; set; } = null;
     }
 }
