@@ -73,7 +73,7 @@ namespace FinalProject.Controllers
             var wavFileName = $"{Guid.NewGuid()}.wav";
             var wavFilePath = Path.Combine("wwwroot/voice_messages", wavFileName);
 
-            var ffmpegPath = @"C:\ffmpeg\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe";
+            var ffmpegPath = @"C:\ffmpeg\bin\ffmpeg.exe";
 
             var arguments = $"-i \"{tempWebmFilePath}\" \"{wavFilePath}\"";
 
