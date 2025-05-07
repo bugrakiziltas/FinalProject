@@ -90,8 +90,8 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> AddToCart(Product product)
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-            var identityUser = await _identityService.GetUserByIdAsync(userId);
+            var identityUser = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var userId = identityUser.Id.ToString();
             var shoppingCartItem = new ShoppingCart
             {
                 ProductId = product.Id,

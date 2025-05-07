@@ -24,7 +24,8 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> Index()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var userId = user.Id.ToString();
             var items =await  _shoppingCartRepository.GetShoppingCartItems(Guid.Parse(userId));
             ViewBag.Total=items.Select(x=>x.Product.Price).Sum();
             return View(items);
@@ -46,7 +47,8 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> CreateCheckoutSession()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var userId = user.Id.ToString();
             var cartItems = await _shoppingCartRepository.GetShoppingCartItems(Guid.Parse(userId));
 
             var domain = $"{Request.Scheme}://{Request.Host}";
@@ -87,7 +89,8 @@ namespace FinalProject.Controllers
             if (session.PaymentStatus == "paid")
             {
                 var claimsIdentity = (ClaimsIdentity)User.Identity;
-                var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+                var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+                var userId = user.Id.ToString();
                 var cartItems = await _shoppingCartRepository.GetShoppingCartItems(Guid.Parse(userId));
 
                 var order = new Order

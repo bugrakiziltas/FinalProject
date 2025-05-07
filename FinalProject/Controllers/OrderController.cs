@@ -29,7 +29,8 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> Purchases()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var userId = user.Id.ToString();
             var crm = await _identityService.GetUserByUserNameAsync("crm@gmail.com");
             ViewBag.crmId = Guid.Parse(crm.Id);
             var orders = await _orderRepository.GetOrdersByUserId(Guid.Parse(userId));

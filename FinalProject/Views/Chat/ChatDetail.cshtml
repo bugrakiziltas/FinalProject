@@ -1,12 +1,12 @@
-﻿@model List<VoiceMessageModel>
-
+﻿@model List<MessageModel>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <title>Voice Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <title>Customer Support Chat</title>
 </head>
 <body class="bg-gray-100">
     <div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden h-[90vh] flex flex-col">
@@ -21,64 +21,131 @@
 
         <!-- Chat Messages -->
         <div id="chatMessages" class="flex-grow overflow-y-auto p-4 space-y-3">
-            @foreach (var message in Model)
+            @if (Model != null && Model.Any())
             {
-                <div class="flex @(message.ReceiverId == ViewBag.CustomerId ? "justify-end" : "justify-start")">
-                    <div class="@(message.ReceiverId == ViewBag.CustomerId
-                        ? "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl"
-                        : "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl")
-                        max-w-[80%] p-3 shadow-sm">
-                        @if (message.Product != null)
-                        {
-                            <div class="flex items-center mb-2 space-x-3">
-
-                                @if (!string.IsNullOrEmpty(message.Product.ImageUrl))
-                                {
-                                    <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-16 h-16 object-cover rounded-lg" />
-                                }
-                                <div>
-
-                                    <p class="font-semibold">@message.Product.Name</p>
-                                </div>
-
-                            </div>
-                        }
-                        <div class="flex items-center space-x-2 mb-2">
-                            <audio controls class="w-full">
-                                <source src="@message.AudioFilePath" type="audio/webm">
-                                Your browser does not support the audio tag.
-                            </audio>
-                            @if (message.Emotion != null)
+                @foreach (var message in Model)
+                {
+                    <div class="flex @(message.ReceiverId == ViewBag.CustomerId ? "justify-end" : "justify-start") mb-4">
+                        <div class="@(message.ReceiverId == ViewBag.CustomerId
+                            ? "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl"
+                            : "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl")
+                            max-w-[80%] p-4 shadow-sm">
+                            @if (message.Product != null)
                             {
-                                <span class="text-sm text-gray-500 italic">@message.Emotion</span>
+                                <div class="flex items-center gap-3 mb-2">
+                                    @if (!string.IsNullOrEmpty(message.Product.ImageUrl))
+                                    {
+                                        <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-12 h-12 object-cover rounded-xl" />
+                                    }
+                                    <span class="font-semibold text-lg">@message.Product.Name</span>
+                                </div>
                             }
+
+                            @if (message.MessageType == MessageTypeEnum.Voice)
+                            {
+                                <audio controls class="w-full mb-2">
+                                    <source src="@message.AudioFilePath" type="audio/webm">
+                                    Your browser does not support the audio tag.
+                                </audio>
+                                @if (message.Emotion != null)
+                                {
+                                    <span class="italic text-sm opacity-70 block">@message.Emotion</span>
+                                }
+                            }
+                            else if (message.MessageType == MessageTypeEnum.Text)
+                            {
+                                <p class="mb-2">@message.TextContent</p>
+                                @if (message.Emotion != null)
+                                {
+                                    <span class="italic text-sm opacity-70 block">@message.Emotion</span>
+                                }
+                            }
+
+                            <span class="text-xs opacity-70 block text-right">
+                                @message.Created.ToString("t")
+                            </span>
                         </div>
-                        <span class="text-xs opacity-70 block text-right">
-                            @message.Created.ToString("t")
-                        </span>
                     </div>
+                }
+            }
+            else
+            {
+                <div class="flex justify-center items-center h-full">
+                    <p class="text-gray-500 text-center">No messages yet. Start the conversation with the customer!</p>
                 </div>
             }
         </div>
 
-        <!-- Recording Controls -->
-        <form id="messageForm" enctype="multipart/form-data" asp-controller="Chat" asp-action="UploadVoiceMessage" method="post" class="p-4 bg-white border-t flex items-center space-x-2">
-            <input type="hidden" name="receiverId" value="@ViewBag.CustomerId" />
-            <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
-            <input type="hidden" name="productId" value="@ViewBag.productId" />
-            <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition">
-                🎤 Record
-            </button>
-            <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50">
-                ⏹️ Stop
-            </button>
-            <button type="submit" id="sendButton" disabled class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition opacity-50">
-                ➤ Send
-            </button>
-        </form>
+        <!-- Message Input Area with Tabs -->
+        <div class="p-4 bg-white border-t">
+            <!-- Message Type Tabs -->
+            <div class="flex mb-3 border-b">
+                <button type="button" id="voiceTabBtn" class="flex-1 py-2 font-medium border-b-2 border-blue-500 text-blue-500">
+                    🎤 Voice Message
+                </button>
+                <button type="button" id="textTabBtn" class="flex-1 py-2 font-medium text-gray-500">
+                    💬 Text Message
+                </button>
+            </div>
+
+            <!-- Voice Message Form -->
+            <form id="voiceForm" enctype="multipart/form-data" asp-controller="Chat" asp-action="UploadVoiceMessage" method="post" class="flex items-center space-x-2">
+                <input type="hidden" name="receiverId" value="@ViewBag.CustomerId" />
+                <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
+                <input type="hidden" name="productId" value="@ViewBag.productId" />
+                <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition">
+                    🎤 Record
+                </button>
+                <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50">
+                    ⏹️ Stop
+                </button>
+                <button type="submit" id="sendButton" disabled class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition opacity-50">
+                    ➤ Send
+                </button>
+            </form>
+
+            <!-- Text Message Form -->
+            <form id="textForm" asp-controller="Chat" asp-action="SendTextMessage" method="post" class="hidden">
+                <input type="hidden" name="receiverId" value="@ViewBag.CustomerId" />
+                <input type="hidden" name="productId" value="@ViewBag.productId" />
+                <div class="flex items-center space-x-2">
+                    <input type="text" name="textContent" id="textInput"
+                           class="flex-grow border rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Type your message..." required />
+                    <button type="submit" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition">
+                        ➤ Send
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
+        // Tab Switching
+        const voiceTabBtn = document.getElementById('voiceTabBtn');
+        const textTabBtn = document.getElementById('textTabBtn');
+        const voiceForm = document.getElementById('voiceForm');
+        const textForm = document.getElementById('textForm');
+
+        voiceTabBtn.addEventListener('click', () => {
+            voiceForm.classList.remove('hidden');
+            textForm.classList.add('hidden');
+            voiceTabBtn.classList.add('border-b-2', 'border-blue-500', 'text-blue-500');
+            voiceTabBtn.classList.remove('text-gray-500');
+            textTabBtn.classList.remove('border-b-2', 'border-blue-500', 'text-blue-500');
+            textTabBtn.classList.add('text-gray-500');
+        });
+
+        textTabBtn.addEventListener('click', () => {
+            textForm.classList.remove('hidden');
+            voiceForm.classList.add('hidden');
+            textTabBtn.classList.add('border-b-2', 'border-blue-500', 'text-blue-500');
+            textTabBtn.classList.remove('text-gray-500');
+            voiceTabBtn.classList.remove('border-b-2', 'border-blue-500', 'text-blue-500');
+            voiceTabBtn.classList.add('text-gray-500');
+        });
+
+        // Voice Recording Logic
         let mediaRecorder;
         let audioChunks = [];
         const startRecordBtn = document.getElementById('startRecord');
@@ -133,12 +200,199 @@
             return dataTransfer.files;
         }
 
-        document.getElementById('messageForm').addEventListener('submit', function (e) {
+        // Voice Form Submit Handler
+        document.getElementById('voiceForm').addEventListener('submit', function (e) {
             if (!audioInput.files.length) {
                 e.preventDefault();
                 alert('Please record an audio message first.');
+                return;
             }
+
+            // Add a local message preview while waiting for server response
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+
+            // Add the audio player
+            const audio = document.createElement("audio");
+            audio.controls = true;
+            audio.className = "w-full mb-2";
+            audio.src = URL.createObjectURL(audioInput.files[0]);
+            contentDiv.appendChild(audio);
+
+            // Add sending indicator
+            const sendingText = document.createElement("span");
+            sendingText.className = "text-xs opacity-70 block text-right";
+            sendingText.textContent = "Sending...";
+            contentDiv.appendChild(sendingText);
+
+            messageDiv.appendChild(contentDiv);
+            document.getElementById("chatMessages").appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         });
+
+        // Text Form Submit Handler
+        document.getElementById('textForm').addEventListener('submit', function (e) {
+            const textInput = document.getElementById('textInput');
+            if (!textInput.value.trim()) {
+                e.preventDefault();
+                return;
+            }
+
+            // Add a local message preview while waiting for server response
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+
+            // Add the text message
+            const textMessage = document.createElement("p");
+            textMessage.className = "mb-2";
+            textMessage.textContent = textInput.value;
+            contentDiv.appendChild(textMessage);
+
+            // Add sending indicator
+            const sendingText = document.createElement("span");
+            sendingText.className = "text-xs opacity-70 block text-right";
+            sendingText.textContent = "Sending...";
+            contentDiv.appendChild(sendingText);
+
+            messageDiv.appendChild(contentDiv);
+            document.getElementById("chatMessages").appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        // SignalR Connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chathub")
+            .build();
+
+        // Handle voice messages
+        connection.on("ReceiveMessage", (senderId, filePath, emotion, productImageUrl, productTitle) => {
+            console.log("Voice message received:", { senderId, filePath, emotion, productImageUrl, productTitle });
+            addMessageToChat({
+                type: 'voice',
+                senderId,
+                filePath,
+                emotion,
+                productImageUrl,
+                productTitle
+            });
+        });
+
+        // Handle text messages
+        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion) => {
+            console.log("Text message received:", { senderId, textContent, productImageUrl, productTitle, emotion });
+            addMessageToChat({
+                type: 'text',
+                senderId,
+                textContent,
+                productImageUrl,
+                productTitle,
+                emotion
+            });
+        });
+
+        // Generic function to add messages to chat
+        function addMessageToChat(messageData) {
+            // Check if the "No messages yet" placeholder exists and remove it
+            const noMessagesPlaceholder = document.querySelector("#chatMessages p.text-gray-500");
+            if (noMessagesPlaceholder) {
+                noMessagesPlaceholder.parentElement.remove();
+            }
+
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "flex justify-start mb-4"; // adjust alignment for received message
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-4 shadow-sm";
+
+            // Product Section if product exists
+            if (messageData.productImageUrl && messageData.productTitle) {
+                const productWrapper = document.createElement("div");
+                productWrapper.className = "flex items-center gap-3 mb-2";
+
+                const productImg = document.createElement("img");
+                productImg.src = messageData.productImageUrl;
+                productImg.alt = "Product";
+                productImg.className = "w-12 h-12 object-cover rounded-xl";
+
+                const title = document.createElement("span");
+                title.textContent = messageData.productTitle;
+                title.className = "font-semibold text-lg";
+
+                productWrapper.appendChild(productImg);
+                productWrapper.appendChild(title);
+                contentDiv.appendChild(productWrapper);
+            }
+
+            // Content based on message type
+            if (messageData.type === 'voice') {
+                // Audio Section
+                const audio = document.createElement("audio");
+                audio.controls = true;
+                audio.className = "w-full mb-2";
+                const source = document.createElement("source");
+                source.src = messageData.filePath;
+                source.type = "audio/webm";
+                audio.appendChild(source);
+                contentDiv.appendChild(audio);
+
+                // Emotion Text if emotion exists
+                if (messageData.emotion) {
+                    const emotionSpan = document.createElement("span");
+                    emotionSpan.textContent = messageData.emotion;
+                    emotionSpan.className = "italic text-sm opacity-70 block";
+                    contentDiv.appendChild(emotionSpan);
+                }
+            } else if (messageData.type === 'text') {
+                // Text message
+                const textParagraph = document.createElement("p");
+                textParagraph.className = "mb-2";
+                textParagraph.textContent = messageData.textContent;
+                contentDiv.appendChild(textParagraph);
+                if (messageData.emotion) {
+                    const emotionSpan = document.createElement("span");
+                    emotionSpan.textContent = messageData.emotion;
+                    emotionSpan.className = "italic text-sm opacity-70 block";
+                    contentDiv.appendChild(emotionSpan);
+                }
+            }
+
+            // Timestamp
+            const timestamp = document.createElement("span");
+            timestamp.className = "text-xs opacity-70 block text-right";
+            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            contentDiv.appendChild(timestamp);
+
+            messageDiv.appendChild(contentDiv);
+            document.getElementById("chatMessages").appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Initialize connection with logging
+        connection.start()
+            .then(() => {
+                console.log("SignalR connection established successfully");
+            })
+            .catch(err => {
+                console.error("SignalR connection error:", err);
+                // Show connection error message to user
+                const chatMessages = document.getElementById("chatMessages");
+                const errorMessage = document.createElement("div");
+                errorMessage.className = "bg-red-100 text-red-700 p-3 rounded-md text-center";
+                errorMessage.textContent = "Connection error. Please refresh the page and try again.";
+                chatMessages.appendChild(errorMessage);
+            });
     </script>
 </body>
 </html>

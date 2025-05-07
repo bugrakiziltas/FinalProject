@@ -3,6 +3,7 @@ using FinalProject.Dtos.Chat;
 using FinalProject.Entities;
 using FinalProject.Helpers;
 using FinalProject.Interfaces;
+using FinalProject.Migrations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -20,11 +21,13 @@ namespace FinalProject.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly IIdentityService _identityService;
-        public ChatController(ApplicationDbContext context, IHubContext<ChatHub> hubContext, IIdentityService identityService)
+        private readonly IProductService _productService;
+        public ChatController(ApplicationDbContext context, IHubContext<ChatHub> hubContext, IIdentityService identityService, IProductService productService)
         {
             _context = context;
             _hubContext = hubContext;
             _identityService = identityService;
+            _productService = productService;
         }
 
         [HttpGet]
@@ -32,9 +35,10 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> Chat(Guid chatWithUserId, Guid productId)
         {   
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userId = Guid.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var userId = user.Id.ToString();
 
-            var messages = await _context.VoiceMessageModels.Include(x => x.Product).Include(x=>x.Sender).Include(x=>x.Receiver)
+            var messages = await _context.MessageModels.Include(x => x.Product).Include(x=>x.Sender).Include(x=>x.Receiver)
                 .Where(m => (m.SenderId == userId.ToString() && m.ReceiverId == chatWithUserId.ToString()) && m.ProductId==productId ||
                             (m.SenderId == chatWithUserId.ToString() && m.ReceiverId == userId.ToString() && m.ProductId == productId))
                 .OrderBy(m => m.Created)
@@ -57,8 +61,9 @@ namespace FinalProject.Controllers
             }
 
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var senderId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
-
+            var sender = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var senderId = sender.Id.ToString();
+            var product = await _productService.GetProductByIdAsync(productId);
 
             var tempWebmFileName = $"{Guid.NewGuid()}.webm";
             var tempWebmFilePath = Path.Combine("wwwroot/voice_messages", tempWebmFileName);
@@ -73,7 +78,7 @@ namespace FinalProject.Controllers
             var wavFileName = $"{Guid.NewGuid()}.wav";
             var wavFilePath = Path.Combine("wwwroot/voice_messages", wavFileName);
 
-            var ffmpegPath = @"C:\ffmpeg\bin\ffmpeg.exe";
+            var ffmpegPath = @"C:\ffmpeg\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe";
 
             var arguments = $"-i \"{tempWebmFilePath}\" \"{wavFilePath}\"";
 
@@ -101,23 +106,22 @@ namespace FinalProject.Controllers
 
             System.IO.File.Delete(tempWebmFilePath);
 
-            var voiceMessage = new VoiceMessageModel
+            var voiceMessage = new MessageModel
             {
                 SenderId = senderId,
                 ReceiverId = receiverId.ToString(),
+                MessageType = MessageTypeEnum.Voice,
                 AudioFilePath = $"/voice_messages/{wavFileName}",
                 Created = DateTime.UtcNow,
                 ProductId = productId
             };
-            // If sender is a customer, run Speech Emotion Recognition
+            
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
                 var client = new SpeechEmotionRecognition("http://127.0.0.1:5001");
 
                 if (await client.IsApiHealthyAsync())
                 {
-                    Console.WriteLine("API is running and healthy!");
-                    // you can debug here to see emotion
                     var emotionResult = await client.RecognizeEmotionAsync(wavFilePath);
                     voiceMessage.Emotion = emotionResult;
                 }
@@ -126,11 +130,11 @@ namespace FinalProject.Controllers
                     Console.WriteLine("API is not available. Please check if the Flask service is running.");
                 }
             }
-            _context.VoiceMessageModels.Add(voiceMessage);
+            _context.MessageModels.Add(voiceMessage);
             await _context.SaveChangesAsync();
 
             await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath);
+                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.Emotion, "/Images/" + product.ImageUrl, product.Name);
 
 
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
@@ -140,7 +144,76 @@ namespace FinalProject.Controllers
 
             return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
         }
+        [HttpPost]
+        public async Task<IActionResult> SendTextMessage(string textContent, Guid receiverId, Guid productId)
+        {
+            if (string.IsNullOrWhiteSpace(textContent))
+            {
+                return BadRequest("Message content cannot be empty.");
+            }
 
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var sender = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
+            var senderId = sender.Id.ToString();
+            var product = await _productService.GetProductByIdAsync(productId);
+
+            var message = new MessageModel
+            {
+                SenderId = senderId,
+                ReceiverId = receiverId.ToString(),
+                MessageType = MessageTypeEnum.Text,
+                TextContent = textContent,
+                Created = DateTime.UtcNow,
+                ProductId = productId
+            };
+            if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
+            {
+                var client = new TextEmotionRecognition("http://127.0.0.1:5001");
+
+                if (await client.IsApiHealthyAsync())
+                {
+                    var emotionResultCode = await client.RecognizeEmotionAsync(textContent);
+                    switch (emotionResultCode)
+                    {
+                        case 0:
+                            message.Emotion = "sadness";
+                            break;
+                        case 1:
+                            message.Emotion = "joy";
+                            break;
+                        case 2:
+                            message.Emotion = "love";
+                            break;
+                        case 3:
+                            message.Emotion = "anger";
+                            break;
+                        case 4:
+                            message.Emotion = "fear";
+                            break;
+                        case 5:
+                            message.Emotion = "surprise";
+                            break;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("API is not available. Please check if the Flask service is running.");
+                }
+            }
+            _context.MessageModels.Add(message);
+            await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.User(receiverId.ToString())
+                .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
+                          "/Images/" + product.ImageUrl, product.Name, message.Emotion);
+
+            if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
+            {
+                return RedirectToAction("Chat", new { chatWithUserId = receiverId, productId = productId });
+            }
+
+            return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
+        }
 
         [Authorize(Roles = "CRM")]
         public async Task<IActionResult> CRMChats()
@@ -152,7 +225,7 @@ namespace FinalProject.Controllers
                 return Unauthorized();
             }
 
-            var chats = await _context.VoiceMessageModels
+            var chats = await _context.MessageModels
         .Include(x => x.Sender)
         .Include(x => x.Receiver)
         .Include(x => x.Product)
@@ -164,7 +237,7 @@ namespace FinalProject.Controllers
             ProductName = g.OrderByDescending(m => m.Created).First().Product.Name,
             ProductId = g.OrderByDescending(m => m.Created).First().Product.Id.ToString(),
             Created = g.OrderByDescending(m => m.Created).First().Created,
-            SenderId = g.OrderByDescending(m => m.Created).First().SenderId,
+            SenderId = g.OrderByDescending(m => m.Created).Last().SenderId,
             ReceiverId = g.OrderByDescending(m => m.Created).First().ReceiverId
         })
         .ToListAsync();
@@ -182,7 +255,7 @@ namespace FinalProject.Controllers
             {
                 return Unauthorized();
             }
-            var messages = await _context.VoiceMessageModels.Include(x=>x.Product)
+            var messages = await _context.MessageModels.Include(x=>x.Product)
             .Where(m => (m.SenderId == userId && m.ReceiverId == crmUserId && m.ProductId.ToString() == productId) ||
             (m.SenderId == crmUserId && m.ReceiverId == userId && m.ProductId.ToString() == productId)).Include(m => m.Sender).Include(m=>m.Receiver)
             .OrderBy(m => m.Created)
