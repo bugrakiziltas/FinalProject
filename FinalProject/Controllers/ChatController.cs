@@ -176,7 +176,7 @@ namespace FinalProject.Controllers
                     switch (emotionResultCode)
                     {
                         case 0:
-                            message.Emotion = "sadness";
+                            message.Emotion = "sad";
                             break;
                         case 1:
                             message.Emotion = "joy";
@@ -185,7 +185,7 @@ namespace FinalProject.Controllers
                             message.Emotion = "love";
                             break;
                         case 3:
-                            message.Emotion = "anger";
+                            message.Emotion = "angry";
                             break;
                         case 4:
                             message.Emotion = "fear";
@@ -225,24 +225,39 @@ namespace FinalProject.Controllers
                 return Unauthorized();
             }
 
-            var chats = await _context.MessageModels
-        .Include(x => x.Sender)
-        .Include(x => x.Receiver)
-        .Include(x => x.Product)
-        .Where(m => m.ReceiverId == crmUserId || m.SenderId == crmUserId)
-        .GroupBy(m => m.SenderId == crmUserId ? m.ReceiverId : m.SenderId)
-        .Select(g => new ChatViewModel
-        {
-            UserName = g.OrderByDescending(m => m.Created).First().Sender.UserName,
-            ProductName = g.OrderByDescending(m => m.Created).First().Product.Name,
-            ProductId = g.OrderByDescending(m => m.Created).First().Product.Id.ToString(),
-            Created = g.OrderByDescending(m => m.Created).First().Created,
-            SenderId = g.OrderByDescending(m => m.Created).Last().SenderId,
-            ReceiverId = g.OrderByDescending(m => m.Created).First().ReceiverId
-        })
-        .ToListAsync();
+            var messages = await _context.MessageModels
+            .Include(x => x.Sender)
+            .Include(x => x.Receiver)
+            .Include(x => x.Product)
+            .Where(m => m.ReceiverId == crmUserId || m.SenderId == crmUserId)
+            .ToListAsync();
+
+            var chats = messages
+            .GroupBy(m => new
+            {
+                OtherUserId = m.SenderId == crmUserId ? m.ReceiverId : m.SenderId,
+                m.ProductId
+            })
+            .Select(g =>
+            {
+                var lastMessage = g.OrderByDescending(m => m.Created).First();
+                return new ChatViewModel
+                {
+                    UserName = lastMessage.Sender.UserName,
+                    ProductName = lastMessage.Product.Name,
+                    ProductId = lastMessage.Product.Id.ToString(),
+                    Created = lastMessage.Created,
+                    SenderId = g.OrderByDescending(m => m.Created).Last().SenderId,
+                    ReceiverId = lastMessage.ReceiverId,
+                    Emotion = lastMessage.Emotion
+                };
+            })
+            .OrderByDescending(c => new[] { "angry", "sad", "disgust", "fear" }.Contains(c.Emotion?.ToLower()))
+            .ThenByDescending(c => c.Created)
+            .ToList();
 
             return View(chats);
+
         }
         [Authorize(Roles = "CRM")]
         public async Task<IActionResult> ChatDetail(string userId, string productId)

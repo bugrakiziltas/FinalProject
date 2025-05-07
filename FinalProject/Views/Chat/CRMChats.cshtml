@@ -14,16 +14,26 @@
     </thead>
     <tbody>
         @foreach (var chat in Model)
-        {
-            <tr>
-                <td>@chat.UserName</td>
-                <td>@chat.ProductName</td>
-                <td>@chat.Created.ToString("g")</td>
-                <td>
-                    <a asp-controller="Chat" asp-action="ChatDetail" asp-route-userId="@chat.SenderId" asp-route-productId="@chat.ProductId"
-                       class="btn btn-primary">View Chat</a>
-                </td>
-            </tr>
-        }
+{
+    
+    var emotion = chat.Emotion?.ToLower() ?? "neutral";
+    var isPositive = new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emotion);
+    var isNegative = new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotion);
+    
+    var rowClass = isPositive ? "table-info" : isNegative ? "table-danger" : "";
+    var style = isNegative ? "font-weight:bold;" : "";
+
+    <tr class="@rowClass" style="@style">
+        <td>@chat.UserName</td>
+        <td>@chat.ProductName</td>
+        <td>@chat.Created.ToString("g")</td>
+        <td>
+            <a asp-controller="Chat" asp-action="ChatDetail" 
+               asp-route-userId="@chat.SenderId" 
+               asp-route-productId="@chat.ProductId"
+               class="btn btn-primary">View Chat</a>
+        </td>
+    </tr>
+}
     </tbody>
 </table>
