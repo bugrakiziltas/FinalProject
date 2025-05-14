@@ -15,7 +15,7 @@
             <img src="/api/placeholder/40/40" alt="Profile" class="w-10 h-10 rounded-full mr-3">
             <div>
                 <h2 class="font-semibold text-lg">@Model.FirstOrDefault()?.Sender.UserName</h2>
-                <p class="text-xs text-blue-200">Online</p>
+                <p class="text-xs text-blue-200">General User Type: @ViewBag.UserType</p>
             </div>
         </div>
 
@@ -38,6 +38,10 @@
                                         <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-12 h-12 object-cover rounded-xl" />
                                     }
                                     <span class="font-semibold text-lg">@message.Product.Name</span>
+                                    @if (ViewBag.IsProblematic)
+                                    {
+                                        <span class="italic text-sm opacity-70 block red">This product is problematic</span>
+                                    }
                                 </div>
                             }
 

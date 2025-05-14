@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NuGet.Protocol.Plugins;
 using Stripe;
 using System.Diagnostics;
@@ -123,6 +124,17 @@ namespace FinalProject.Controllers
                 if (await client.IsApiHealthyAsync())
                 {
                     var emotionResult = await client.RecognizeEmotionAsync(wavFilePath);
+                    if(new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotionResult))
+                    {
+                        if (product.problematicComments > 2)
+                        {
+                            product.isProblematic = true;
+                        }
+                        else
+                        {
+                            product.problematicComments++;
+                        }
+                    }
                     voiceMessage.Emotion = emotionResult;
                 }
                 else
@@ -177,6 +189,14 @@ namespace FinalProject.Controllers
                     {
                         case 0:
                             message.Emotion = "sad";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
                             break;
                         case 1:
                             message.Emotion = "joy";
@@ -186,9 +206,25 @@ namespace FinalProject.Controllers
                             break;
                         case 3:
                             message.Emotion = "angry";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
                             break;
                         case 4:
                             message.Emotion = "fear";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
                             break;
                         case 5:
                             message.Emotion = "surprise";
@@ -241,6 +277,20 @@ namespace FinalProject.Controllers
             .Select(g =>
             {
                 var lastMessage = g.OrderByDescending(m => m.Created).First();
+                // Little Chat Report
+                var allEmotions = g.Where(x => x.SenderId == lastMessage.SenderId).OrderByDescending(x => x.Created).Select(x => x.Emotion).ToArray();
+                var lastThreeEmotions = new List<string>();
+                for(int i=0; i<3; i++)
+                {
+                    if (i >= allEmotions.Count())
+                    {
+                        lastThreeEmotions.Add("unknown");
+                    }
+                    else
+                    {
+                        lastThreeEmotions.Add(allEmotions[i]);
+                    }
+                }
                 return new ChatViewModel
                 {
                     UserName = lastMessage.Sender.UserName,
@@ -249,7 +299,8 @@ namespace FinalProject.Controllers
                     Created = lastMessage.Created,
                     SenderId = g.OrderByDescending(m => m.Created).Last().SenderId,
                     ReceiverId = lastMessage.ReceiverId,
-                    Emotion = lastMessage.Emotion
+                    Emotion = lastMessage.Emotion,
+                    LastEmotions = lastThreeEmotions,
                 };
             })
             .OrderByDescending(c => new[] { "angry", "sad", "disgust", "fear" }.Contains(c.Emotion?.ToLower()))
@@ -276,6 +327,20 @@ namespace FinalProject.Controllers
             .OrderBy(m => m.Created)
             .ToListAsync();
 
+            //Checking if the product is problematic
+            ViewBag.IsProblematic=messages.First().Product.isProblematic;
+
+            //Deciding the Customer Type
+            var allMessagesSentByCust = await _context.MessageModels.Include(x=>x.Sender).Where(x=>x.SenderId==userId).ToListAsync();
+            var negativeMessages = allMessagesSentByCust.Where(x => new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(x.Emotion?.ToLower())).Count();
+            var positiveMessages = allMessagesSentByCust.Where(x => new[] { "happy", "joy", "neutral", "love", "surprise", "neutral","ps" }.Contains(x.Emotion?.ToLower())).Count();
+            if (positiveMessages >= negativeMessages) {
+                ViewBag.UserType = "pleased"; 
+            }
+            else
+            {
+                ViewBag.UserType = "Stressful";
+            }
             return View(messages);
         }
 

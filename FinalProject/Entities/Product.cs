@@ -17,6 +17,7 @@ namespace FinalProject.Entities
         public Guid CategoryId { get; set; }
         public Category Category { get; set; }
 
-
+        public bool isProblematic { get; set; } = false;
+        public int problematicComments { get; set; } = 0;
     }
 }

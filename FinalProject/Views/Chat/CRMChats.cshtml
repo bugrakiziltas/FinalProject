@@ -10,16 +10,34 @@
             <th>Product</th>
             <th>Last Message</th>
             <th>Actions</th>
+            <th>Chat Report</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var chat in Model)
 {
-    
+            //chat report
+            var unknownNum = 0;
+            var positiveNum = 0;
+            var negativeNum = 0;
+            @foreach (var emo in chat.LastEmotions)
+            {
+                if (emo == "unknown")
+                {
+                    unknownNum++;
+                }
+                else if (new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emo))
+                {
+                    positiveNum++;
+                }
+                else
+                {
+                    negativeNum++;
+                }
+            }
     var emotion = chat.Emotion?.ToLower() ?? "neutral";
     var isPositive = new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emotion);
     var isNegative = new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotion);
-    
     var rowClass = isPositive ? "table-info" : isNegative ? "table-danger" : "";
     var style = isNegative ? "font-weight:bold;" : "";
 
@@ -33,6 +51,7 @@
                asp-route-productId="@chat.ProductId"
                class="btn btn-primary">View Chat</a>
         </td>
+        <td>Last Three Messages: @positiveNum positive, @negativeNum negative @if(unknownNum!=0){<p class="fw-bold">, @unknownNum unknown</p>}</td>
     </tr>
 }
     </tbody>
