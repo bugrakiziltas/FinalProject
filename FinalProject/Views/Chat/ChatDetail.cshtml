@@ -51,17 +51,21 @@
                                     <source src="@message.AudioFilePath" type="audio/webm">
                                     Your browser does not support the audio tag.
                                 </audio>
-                                @if (message.Emotion != null)
+                                @if (message.VoiceEmotion != null)
                                 {
-                                    <span class="italic text-sm opacity-70 block">@message.Emotion</span>
+                                    <span class="italic text-sm opacity-70 block">@message.VoiceEmotion</span>
+                                }
+                                @if (message.TextEmotion != null)
+                                {
+                                    <span class="italic text-sm opacity-70 block">@message.TextEmotion</span>
                                 }
                             }
                             else if (message.MessageType == MessageTypeEnum.Text)
                             {
                                 <p class="mb-2">@message.TextContent</p>
-                                @if (message.Emotion != null)
+                                @if (message.TextEmotion != null)
                                 {
-                                    <span class="italic text-sm opacity-70 block">@message.Emotion</span>
+                                    <span class="italic text-sm opacity-70 block">@message.TextEmotion</span>
                                 }
                             }
 
@@ -279,13 +283,14 @@
             .build();
 
         // Handle voice messages
-        connection.on("ReceiveMessage", (senderId, filePath, emotion, productImageUrl, productTitle) => {
-            console.log("Voice message received:", { senderId, filePath, emotion, productImageUrl, productTitle });
+        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle) => {
+            console.log("Voice message received:", { senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle });
             addMessageToChat({
                 type: 'voice',
                 senderId,
                 filePath,
-                emotion,
+                voiceEmotion, 
+                textEmotion,
                 productImageUrl,
                 productTitle
             });
@@ -350,9 +355,15 @@
                 contentDiv.appendChild(audio);
 
                 // Emotion Text if emotion exists
-                if (messageData.emotion) {
+                if (messageData.voiceEmotion) {
                     const emotionSpan = document.createElement("span");
-                    emotionSpan.textContent = messageData.emotion;
+                    emotionSpan.textContent = messageData.voiceEmotion;
+                    emotionSpan.className = "italic text-sm opacity-70 block";
+                    contentDiv.appendChild(emotionSpan);
+                }
+                if (messageData.textEmotion) {
+                    const emotionSpan = document.createElement("span");
+                    emotionSpan.textContent = messageData.textEmotion;
                     emotionSpan.className = "italic text-sm opacity-70 block";
                     contentDiv.appendChild(emotionSpan);
                 }

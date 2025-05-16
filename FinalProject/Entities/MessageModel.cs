@@ -21,6 +21,7 @@ namespace FinalProject.Entities
         public string? AudioFilePath { get; set; }
         public string? TextContent { get; set; }
         public DateTime Created { get; set; }
-        public string? Emotion { get; set; } = null;
+        public string? VoiceEmotion { get; set; } = null;
+        public string? TextEmotion { get; set; } = null;
     }
 }

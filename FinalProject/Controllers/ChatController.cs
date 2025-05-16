@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Protocol.Plugins;
@@ -119,12 +120,59 @@ namespace FinalProject.Controllers
             
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
-                var client = new SpeechEmotionRecognition("http://127.0.0.1:5001");
+                var client = new EmotionAnalysis("http://127.0.0.1:5001");
 
                 if (await client.IsApiHealthyAsync())
                 {
-                    var emotionResult = await client.RecognizeEmotionAsync(wavFilePath);
-                    if(new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotionResult))
+                    var voiceEmotion = await client.RecognizeEmotionAsync(wavFilePath);
+                    var TextOfVoice = await client.TranscribeAudioAsync(wavFilePath);
+                    var textEmotion = await client.RecognizeTextEmotionAsync(TextOfVoice);
+                    switch (textEmotion)
+                    {
+                        case 0:
+                            voiceMessage.TextEmotion = "sad";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
+                            break;
+                        case 1:
+                            voiceMessage.TextEmotion = "joy";
+                            break;
+                        case 2:
+                            voiceMessage.TextEmotion = "love";
+                            break;
+                        case 3:
+                            voiceMessage.TextEmotion = "angry";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
+                            break;
+                        case 4:
+                            voiceMessage.TextEmotion = "fear";
+                            if (product.problematicComments > 2)
+                            {
+                                product.isProblematic = true;
+                            }
+                            else
+                            {
+                                product.problematicComments++;
+                            }
+                            break;
+                        case 5:
+                            voiceMessage.TextEmotion = "surprise";
+                            break;
+                    }
+                if (new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(voiceEmotion))
                     {
                         if (product.problematicComments > 2)
                         {
@@ -135,7 +183,7 @@ namespace FinalProject.Controllers
                             product.problematicComments++;
                         }
                     }
-                    voiceMessage.Emotion = emotionResult;
+                    voiceMessage.VoiceEmotion = voiceEmotion;
                 }
                 else
                 {
@@ -145,15 +193,14 @@ namespace FinalProject.Controllers
             _context.MessageModels.Add(voiceMessage);
             await _context.SaveChangesAsync();
 
-            await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.Emotion, "/Images/" + product.ImageUrl, product.Name);
-
-
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
+                await _hubContext.Clients.User(receiverId.ToString())
+                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name);
                 return RedirectToAction("Chat", new { chatWithUserId = receiverId, productId = productId });
             }
-
+            await _hubContext.Clients.User(receiverId.ToString())
+                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, "", "", "/Images/" + product.ImageUrl, product.Name);
             return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
         }
         [HttpPost]
@@ -180,15 +227,15 @@ namespace FinalProject.Controllers
             };
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
-                var client = new TextEmotionRecognition("http://127.0.0.1:5001");
+                var client = new EmotionAnalysis("http://127.0.0.1:5001");
 
                 if (await client.IsApiHealthyAsync())
                 {
-                    var emotionResultCode = await client.RecognizeEmotionAsync(textContent);
+                    var emotionResultCode = await client.RecognizeTextEmotionAsync(textContent);
                     switch (emotionResultCode)
                     {
                         case 0:
-                            message.Emotion = "sad";
+                            message.TextEmotion = "sad";
                             if (product.problematicComments > 2)
                             {
                                 product.isProblematic = true;
@@ -199,13 +246,13 @@ namespace FinalProject.Controllers
                             }
                             break;
                         case 1:
-                            message.Emotion = "joy";
+                            message.TextEmotion = "joy";
                             break;
                         case 2:
-                            message.Emotion = "love";
+                            message.TextEmotion = "love";
                             break;
                         case 3:
-                            message.Emotion = "angry";
+                            message.TextEmotion = "angry";
                             if (product.problematicComments > 2)
                             {
                                 product.isProblematic = true;
@@ -216,7 +263,7 @@ namespace FinalProject.Controllers
                             }
                             break;
                         case 4:
-                            message.Emotion = "fear";
+                            message.TextEmotion = "fear";
                             if (product.problematicComments > 2)
                             {
                                 product.isProblematic = true;
@@ -227,7 +274,7 @@ namespace FinalProject.Controllers
                             }
                             break;
                         case 5:
-                            message.Emotion = "surprise";
+                            message.TextEmotion = "surprise";
                             break;
                     }
                 }
@@ -241,7 +288,7 @@ namespace FinalProject.Controllers
 
             await _hubContext.Clients.User(receiverId.ToString())
                 .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
-                          "/Images/" + product.ImageUrl, product.Name, message.Emotion);
+                          "/Images/" + product.ImageUrl, product.Name, message.TextEmotion);
 
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
@@ -276,9 +323,10 @@ namespace FinalProject.Controllers
             })
             .Select(g =>
             {
-                var lastMessage = g.OrderByDescending(m => m.Created).First();
+                var custId = g.OrderByDescending(m => m.Created).Last().SenderId;
+                var lastMessage = g.Where(x=>x.SenderId == custId).OrderByDescending(m => m.Created).First();
                 // Little Chat Report
-                var allEmotions = g.Where(x => x.SenderId == lastMessage.SenderId).OrderByDescending(x => x.Created).Select(x => x.Emotion).ToArray();
+                var allEmotions = g.Where(x => x.SenderId == custId).OrderByDescending(x => x.Created).Select(x => x.TextEmotion).ToArray();
                 var lastThreeEmotions = new List<string>();
                 for(int i=0; i<3; i++)
                 {
@@ -298,8 +346,8 @@ namespace FinalProject.Controllers
                     ProductId = lastMessage.Product.Id.ToString(),
                     Created = lastMessage.Created,
                     SenderId = g.OrderByDescending(m => m.Created).Last().SenderId,
-                    ReceiverId = lastMessage.ReceiverId,
-                    Emotion = lastMessage.Emotion,
+                    ReceiverId = g.OrderByDescending(m => m.Created).Last().ReceiverId,
+                    Emotion = lastMessage.TextEmotion,
                     LastEmotions = lastThreeEmotions,
                 };
             })
@@ -332,8 +380,8 @@ namespace FinalProject.Controllers
 
             //Deciding the Customer Type
             var allMessagesSentByCust = await _context.MessageModels.Include(x=>x.Sender).Where(x=>x.SenderId==userId).ToListAsync();
-            var negativeMessages = allMessagesSentByCust.Where(x => new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(x.Emotion?.ToLower())).Count();
-            var positiveMessages = allMessagesSentByCust.Where(x => new[] { "happy", "joy", "neutral", "love", "surprise", "neutral","ps" }.Contains(x.Emotion?.ToLower())).Count();
+            var negativeMessages = allMessagesSentByCust.Where(x => new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(x.TextEmotion?.ToLower())).Count();
+            var positiveMessages = allMessagesSentByCust.Where(x => new[] { "happy", "joy", "neutral", "love", "surprise", "neutral","ps" }.Contains(x.TextEmotion?.ToLower())).Count();
             if (positiveMessages >= negativeMessages) {
                 ViewBag.UserType = "pleased"; 
             }

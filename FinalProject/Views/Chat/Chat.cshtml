@@ -195,7 +195,7 @@
             .build();
 
         // Handle incoming voice messages
-        connection.on("ReceiveMessage", (senderId, filePath, emotion, productImageUrl, productTitle) => {
+        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle) => {
             const listItem = document.createElement("div");
             listItem.className = "flex justify-start";
 
@@ -243,7 +243,7 @@
         });
 
         // Handle incoming text messages
-        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle) => {
+        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle,emotion) => {
             const listItem = document.createElement("div");
             listItem.className = "flex justify-start";
 
