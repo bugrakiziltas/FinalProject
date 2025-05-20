@@ -131,7 +131,7 @@ namespace FinalProject.Controllers
                     {
                         case 0:
                             voiceMessage.TextEmotion = "sad";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -148,7 +148,7 @@ namespace FinalProject.Controllers
                             break;
                         case 3:
                             voiceMessage.TextEmotion = "angry";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -159,7 +159,7 @@ namespace FinalProject.Controllers
                             break;
                         case 4:
                             voiceMessage.TextEmotion = "fear";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -174,7 +174,7 @@ namespace FinalProject.Controllers
                     }
                 if (new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(voiceEmotion))
                     {
-                        if (product.problematicComments > 2)
+                        if (product.problematicComments > 0)
                         {
                             product.isProblematic = true;
                         }
@@ -236,7 +236,7 @@ namespace FinalProject.Controllers
                     {
                         case 0:
                             message.TextEmotion = "sad";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -253,7 +253,7 @@ namespace FinalProject.Controllers
                             break;
                         case 3:
                             message.TextEmotion = "angry";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -264,7 +264,7 @@ namespace FinalProject.Controllers
                             break;
                         case 4:
                             message.TextEmotion = "fear";
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -326,7 +326,21 @@ namespace FinalProject.Controllers
                 var custId = g.OrderByDescending(m => m.Created).Last().SenderId;
                 var lastMessage = g.Where(x=>x.SenderId == custId).OrderByDescending(m => m.Created).First();
                 // Little Chat Report
-                var allEmotions = g.Where(x => x.SenderId == custId).OrderByDescending(x => x.Created).Select(x => x.TextEmotion).ToArray();
+                var allEmotions = g.Where(x => x.SenderId == custId).OrderByDescending(x => x.Created).SelectMany(x =>
+                {
+                    var emotions = new List<string>();
+                    if (x.VoiceEmotion != null)
+                    {
+                        emotions.Add(x.TextEmotion);
+                        emotions.Add(x.VoiceEmotion);
+                    }
+                    else
+                    {
+                        emotions.Add(x.TextEmotion);
+                    }
+
+                    return emotions;
+                }).ToArray();
                 var lastThreeEmotions = new List<string>();
                 for(int i=0; i<3; i++)
                 {
