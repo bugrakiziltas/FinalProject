@@ -1,58 +1,78 @@
 ﻿@using FinalProject.Dtos.Chat
 @model List<ChatViewModel>
 
-<h2>Customer Chats</h2>
+<div class="container my-5">
+    <h2 class="mb-4 text-center text-primary">Customer Chats</h2>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Customer</th>
-            <th>Product</th>
-            <th>Last Message</th>
-            <th>Actions</th>
-            <th>Chat Report</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var chat in Model)
-{
-            //chat report
-            var unknownNum = 0;
-            var positiveNum = 0;
-            var negativeNum = 0;
-            @foreach (var emo in chat.LastEmotions)
-            {
-                if (emo == "unknown")
+    <div class="table-responsive shadow rounded">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Last Message</th>
+                    <th>Actions</th>
+                    <th>Chat Report</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var chat in Model)
                 {
-                    unknownNum++;
-                }
-                else if (new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emo))
-                {
-                    positiveNum++;
-                }
-                else
-                {
-                    negativeNum++;
-                }
-            }
-    var emotion = chat.Emotion?.ToLower() ?? "neutral";
-    var isPositive = new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emotion);
-    var isNegative = new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotion);
-    var rowClass = isPositive ? "table-info" : isNegative ? "table-danger" : "";
-    var style = isNegative ? "font-weight:bold;" : "";
+                    // emotion report counters
+                    var unknownNum = 0;
+                    var positiveNum = 0;
+                    var negativeNum = 0;
 
-    <tr class="@rowClass" style="@style">
-        <td>@chat.UserName</td>
-        <td>@chat.ProductName</td>
-        <td>@chat.Created.ToString("g")</td>
-        <td>
-            <a asp-controller="Chat" asp-action="ChatDetail" 
-               asp-route-userId="@chat.SenderId" 
-               asp-route-productId="@chat.ProductId"
-               class="btn btn-primary">View Chat</a>
-        </td>
-        <td>Last Three Messages: @positiveNum positive, @negativeNum negative @if(unknownNum!=0){<p class="fw-bold">, @unknownNum unknown</p>}</td>
-    </tr>
-}
-    </tbody>
-</table>
+                    foreach (var emo in chat.LastEmotions)
+                    {
+                        if (emo == "unknown")
+                        {
+                            unknownNum++;
+                        }
+                        else if (new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emo))
+                        {
+                            positiveNum++;
+                        }
+                        else
+                        {
+                            negativeNum++;
+                        }
+                    }
+
+                    var emotion = chat.Emotion?.ToLower() ?? "neutral";
+                    var isPositive = new[] { "happy", "joy", "neutral", "love", "surprise" }.Contains(emotion);
+                    var isNegative = new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(emotion);
+                    var rowClass = isPositive ? "table-info" : isNegative ? "table-danger" : "";
+                    var style = isNegative ? "font-weight:bold;" : "";
+
+                    <tr class="@rowClass" style="@style">
+                        <td class="fw-semibold">@chat.UserName</td>
+                        <td>@chat.ProductName</td>
+                        <td>@chat.Created.ToString("g")</td>
+                        <td>
+                            <a asp-controller="Chat"
+                               asp-action="ChatDetail"
+                               asp-route-userId="@chat.SenderId"
+                               asp-route-productId="@chat.ProductId"
+                               class="btn btn-outline-primary btn-sm">
+                                View Chat
+                            </a>
+                        </td>
+                        <td>
+                            <div class="small">
+                                <strong>Last Three Messages:</strong><br />
+                                <span class="text-success">@positiveNum positive</span>,
+                                <span class="text-danger">@negativeNum negative</span>
+                                @if (unknownNum != 0)
+                                {
+                                    <span class="text-warning fw-bold">, @unknownNum unknown</span>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

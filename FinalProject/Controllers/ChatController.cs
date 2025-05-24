@@ -126,7 +126,7 @@ namespace FinalProject.Controllers
                 {
                     var voiceEmotion = await client.RecognizeEmotionAsync(wavFilePath);
                     var TextOfVoice = await client.TranscribeAudioAsync(wavFilePath);
-                    voiceEmotion.TextContent= TextOfVoice;
+                    voiceMessage.TextContent= TextOfVoice;
                     var textEmotion = await client.RecognizeTextEmotionAsync(TextOfVoice);
                     bool isFirstMessageOfCustomer = IsFirstMessageFromCustomerForProduct(voiceMessage.SenderId, product.Id);
                     switch (textEmotion)
@@ -135,7 +135,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "sad";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -155,7 +155,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "angry";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -169,7 +169,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "fear";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -187,7 +187,7 @@ namespace FinalProject.Controllers
                     {
                         if (isFirstMessageOfCustomer)
                         {
-                            if (product.problematicComments > 2)
+                            if (product.problematicComments > 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -246,13 +246,14 @@ namespace FinalProject.Controllers
                 if (await client.IsApiHealthyAsync())
                 {
                     var emotionResultCode = await client.RecognizeTextEmotionAsync(textContent);
+                    bool isFirstMessageOfCustomer = IsFirstMessageFromCustomerForProduct(message.SenderId, product.Id);
                     switch (emotionResultCode)
                     {
                         case 0:
                             message.TextEmotion = "sad";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -272,7 +273,7 @@ namespace FinalProject.Controllers
                             message.TextEmotion = "angry";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -286,7 +287,7 @@ namespace FinalProject.Controllers
                             message.TextEmotion = "fear";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 2)
+                                if (product.problematicComments > 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -349,7 +350,7 @@ namespace FinalProject.Controllers
                 var custId = g.OrderByDescending(m => m.Created).Last().SenderId;
                 var lastMessage = g.Where(x=>x.SenderId == custId).OrderByDescending(m => m.Created).First();
                 // Little Chat Report
-                var allEmotions = g.Where(x => x.SenderId == custId).OrderByDescending(x => x.Created)..SelectMany(x =>
+                var allEmotions = g.Where(x => x.SenderId == custId).OrderByDescending(x => x.Created).SelectMany(x =>
                 {
                     var emotions = new List<string>();
                     if (x.VoiceEmotion != null)
@@ -430,9 +431,9 @@ namespace FinalProject.Controllers
             return View(messages);
         }
 
-        private bool IsFirstMessageFromCustomerForProduct(string customerId, int productId)
+        private bool IsFirstMessageFromCustomerForProduct(string customerId, Guid productId)
         {
-            int messageCount = _context.Messages
+            int messageCount = _context.MessageModels
                 .Count(m => m.SenderId == customerId && m.ProductId == productId);
             return messageCount == 0;
         }

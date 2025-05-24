@@ -7,15 +7,45 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <title>Customer Support Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body class="bg-gray-100">
     <div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden h-[90vh] flex flex-col">
-        <!-- Chat Header -->
-        <div class="bg-blue-600 text-white p-4 shadow-md flex items-center">
-            <img src="/api/placeholder/40/40" alt="Profile" class="w-10 h-10 rounded-full mr-3">
+        <!-- Enhanced Chat Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 shadow-md flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="relative">
+                    @if (ViewBag.UserType == "pleased")
+                    {
+                        <span class="absolute -bottom-1 -right-1 text-lg">😊</span>
+                    }
+                    else
+                    {
+                        <span class="absolute -bottom-1 -right-1 text-lg">😓</span>
+                    }
+                </div>
+                <div>
+                    <h2 class="font-semibold text-lg">@Model.FirstOrDefault()?.Sender.UserName</h2>
+                    <div class="flex items-center text-xs">
+                        @if (ViewBag.UserType == "pleased")
+                        {
+                            <span class="bg-green-500 rounded-full px-2 py-0.5 flex items-center">
+                                <i class="fas fa-smile mr-1"></i> Satisfied Customer
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="bg-orange-500 rounded-full px-2 py-0.5 flex items-center">
+                                <i class="fas fa-exclamation-circle mr-1"></i> Needs Attention
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
             <div>
-                <h2 class="font-semibold text-lg">@Model.FirstOrDefault()?.Sender.UserName</h2>
-                <p class="text-xs text-blue-200">General User Type: @ViewBag.UserType</p>
+                <button class="p-2 rounded-full hover:bg-blue-700 transition">
+                    <i class="fas fa-info-circle"></i>
+                </button>
             </div>
         </div>
 
@@ -27,49 +57,66 @@
                 {
                     <div class="flex @(message.ReceiverId == ViewBag.CustomerId ? "justify-end" : "justify-start") mb-4">
                         <div class="@(message.ReceiverId == ViewBag.CustomerId
-                            ? "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl"
-                            : "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl")
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl"
+                            : "bg-gradient-to-r from-gray-100 to-gray-200 text-black rounded-r-2xl rounded-bl-2xl")
                             max-w-[80%] p-4 shadow-sm">
                             @if (message.Product != null)
                             {
-                                <div class="flex items-center gap-3 mb-2">
+                                <div class="flex items-center gap-3 mb-2 bg-white/20 p-2 rounded-lg">
                                     @if (!string.IsNullOrEmpty(message.Product.ImageUrl))
                                     {
-                                        <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-12 h-12 object-cover rounded-xl" />
+                                        <img src="~/Images/@message.Product.ImageUrl" alt="@message.Product.Name" class="w-12 h-12 object-cover rounded-xl shadow-sm" />
                                     }
-                                    <span class="font-semibold text-lg">@message.Product.Name</span>
-                                    @if (ViewBag.IsProblematic)
-                                    {
-                                        <span class="italic text-sm opacity-70 block red">This product is problematic</span>
-                                    }
+                                    <div>
+                                        <span class="font-semibold text-lg">@message.Product.Name</span>
+                                        @if (ViewBag.IsProblematic)
+                                        {
+                                            <div class="mt-1 flex items-center bg-red-100 text-red-700 px-2 py-0.5 rounded-md text-xs font-medium">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i> Product has issues
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
                             }
 
                             @if (message.MessageType == MessageTypeEnum.Voice)
                             {
-                                <audio controls class="w-full mb-2">
-                                    <source src="@message.AudioFilePath" type="audio/webm">
-                                    Your browser does not support the audio tag.
-                                </audio>
-                                @if (message.VoiceEmotion != null)
-                                {
-                                    <span class="italic text-sm opacity-70 block">@message.VoiceEmotion</span>
-                                }
-                                @if (message.TextEmotion != null)
-                                {
-                                    <span class="italic text-sm opacity-70 block">@message.TextEmotion</span>
-                                }
+                                <div class="rounded-lg bg-black/10 p-2 mb-2">
+                                    <audio controls class="w-full">
+                                        <source src="@message.AudioFilePath" type="audio/webm">
+                                        Your browser does not support the audio tag.
+                                    </audio>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    @if (message.VoiceEmotion != null)
+                                    {
+                                        <div class="inline-flex items-center bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                                            <i class="fas fa-microphone mr-1" title="Voice Emotion"></i>
+                                            @GetEmotionEmoji(message.VoiceEmotion) @message.VoiceEmotion
+                                        </div>
+                                    }
+                                    @if (message.TextEmotion != null)
+                                    {
+                                        <div class="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                            <i class="fas fa-comment-alt mr-1" title="Text Emotion"></i>
+                                            @GetEmotionEmoji(message.TextEmotion) @message.TextEmotion
+                                        </div>
+                                    }
+                                </div>
                             }
                             else if (message.MessageType == MessageTypeEnum.Text)
                             {
-                                <p class="mb-2">@message.TextContent</p>
+                                <p class="mb-2 leading-relaxed">@message.TextContent</p>
                                 @if (message.TextEmotion != null)
                                 {
-                                    <span class="italic text-sm opacity-70 block">@message.TextEmotion</span>
+                                    <div class="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                        <i class="fas fa-comment-alt mr-1" title="Text Emotion"></i>
+                                        @GetEmotionEmoji(message.TextEmotion) @message.TextEmotion
+                                    </div>
                                 }
                             }
 
-                            <span class="text-xs opacity-70 block text-right">
+                            <span class="text-xs opacity-70 block text-right mt-2">
                                 @message.Created.ToString("t")
                             </span>
                         </div>
@@ -79,20 +126,23 @@
             else
             {
                 <div class="flex justify-center items-center h-full">
-                    <p class="text-gray-500 text-center">No messages yet. Start the conversation with the customer!</p>
+                    <div class="text-center text-gray-500 p-6 bg-gray-50 rounded-xl shadow-sm">
+                        <i class="fas fa-comments text-4xl mb-2 text-gray-400"></i>
+                        <p>No messages yet. Start the conversation with the customer!</p>
+                    </div>
                 </div>
             }
         </div>
 
-        <!-- Message Input Area with Tabs -->
+        <!-- Message Input Area with Tabs (Enhanced) -->
         <div class="p-4 bg-white border-t">
             <!-- Message Type Tabs -->
             <div class="flex mb-3 border-b">
-                <button type="button" id="voiceTabBtn" class="flex-1 py-2 font-medium border-b-2 border-blue-500 text-blue-500">
-                    🎤 Voice Message
+                <button type="button" id="voiceTabBtn" class="flex items-center justify-center flex-1 py-2 font-medium border-b-2 border-blue-500 text-blue-500">
+                    <i class="fas fa-microphone mr-2"></i> Voice Message
                 </button>
-                <button type="button" id="textTabBtn" class="flex-1 py-2 font-medium text-gray-500">
-                    💬 Text Message
+                <button type="button" id="textTabBtn" class="flex items-center justify-center flex-1 py-2 font-medium text-gray-500">
+                    <i class="fas fa-keyboard mr-2"></i> Text Message
                 </button>
             </div>
 
@@ -101,14 +151,17 @@
                 <input type="hidden" name="receiverId" value="@ViewBag.CustomerId" />
                 <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
                 <input type="hidden" name="productId" value="@ViewBag.productId" />
-                <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition">
-                    🎤 Record
+                <button type="button" id="startRecord" class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition flex items-center justify-center">
+                    <i class="fas fa-microphone"></i>
                 </button>
-                <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50">
-                    ⏹️ Stop
+                <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition opacity-50 flex items-center justify-center">
+                    <i class="fas fa-stop"></i>
                 </button>
-                <button type="submit" id="sendButton" disabled class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition opacity-50">
-                    ➤ Send
+                <div class="flex-grow bg-gray-100 rounded-full h-2 relative">
+                    <div id="recordingIndicator" class="absolute inset-0 bg-red-400 rounded-full w-0 transition-all duration-200"></div>
+                </div>
+                <button type="submit" id="sendButton" disabled class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition opacity-50 flex items-center justify-center">
+                    <i class="fas fa-paper-plane"></i>
                 </button>
             </form>
 
@@ -120,13 +173,29 @@
                     <input type="text" name="textContent" id="textInput"
                            class="flex-grow border rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                            placeholder="Type your message..." required />
-                    <button type="submit" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition">
-                        ➤ Send
+                    <button type="submit" class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition flex items-center justify-center">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
+    @functions {
+        public string GetEmotionEmoji(string emotion)
+        {
+            return emotion?.ToLower() switch
+            {
+                "sad" => "😢",
+                "joy" => "😄",
+                "love" => "❤️",
+                "angry" => "😠",
+                "fear" => "😨",
+                "surprise" => "😲",
+                _ => "😐"
+            };
+        }
+    }
 
     <script>
         // Tab Switching
@@ -161,6 +230,8 @@
         const sendButton = document.getElementById('sendButton');
         const audioInput = document.getElementById('audioInput');
         const chatMessages = document.getElementById('chatMessages');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        let recordingInterval;
 
         startRecordBtn.addEventListener('click', startRecording);
         stopRecordBtn.addEventListener('click', stopRecording);
@@ -179,6 +250,8 @@
                     audioInput.files = createFileList(audioBlob);
                     sendButton.disabled = false;
                     sendButton.classList.remove('opacity-50');
+                    clearInterval(recordingInterval);
+                    recordingIndicator.style.width = '0';
                 };
 
                 mediaRecorder.start();
@@ -187,6 +260,14 @@
                 stopRecordBtn.disabled = false;
                 stopRecordBtn.classList.remove('opacity-50');
                 audioChunks = [];
+
+                // Pulse recording indicator
+                let pulse = 0;
+                recordingInterval = setInterval(() => {
+                    pulse = (pulse + 5) % 100;
+                    recordingIndicator.style.width = `${20 + pulse * 0.8}%`;
+                }, 100);
+
             } catch (err) {
                 console.error('Error accessing microphone:', err);
                 alert('Could not access microphone. Please check permissions.');
@@ -195,6 +276,7 @@
 
         function stopRecording() {
             mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
             startRecordBtn.disabled = false;
             startRecordBtn.classList.remove('opacity-50');
             stopRecordBtn.disabled = true;
@@ -221,19 +303,24 @@
             messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
 
             const contentDiv = document.createElement("div");
-            contentDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+            contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
 
-            // Add the audio player
+            // Add the audio player in a nice container
+            const audioContainer = document.createElement("div");
+            audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
+
             const audio = document.createElement("audio");
             audio.controls = true;
-            audio.className = "w-full mb-2";
+            audio.className = "w-full";
             audio.src = URL.createObjectURL(audioInput.files[0]);
-            contentDiv.appendChild(audio);
 
-            // Add sending indicator
-            const sendingText = document.createElement("span");
-            sendingText.className = "text-xs opacity-70 block text-right";
-            sendingText.textContent = "Sending...";
+            audioContainer.appendChild(audio);
+            contentDiv.appendChild(audioContainer);
+
+            // Add sending indicator with spinner
+            const sendingText = document.createElement("div");
+            sendingText.className = "flex items-center justify-center text-xs opacity-70 mt-2";
+            sendingText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
             contentDiv.appendChild(sendingText);
 
             messageDiv.appendChild(contentDiv);
@@ -256,7 +343,7 @@
             messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
 
             const contentDiv = document.createElement("div");
-            contentDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+            contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
 
             // Add the text message
             const textMessage = document.createElement("p");
@@ -264,16 +351,21 @@
             textMessage.textContent = textInput.value;
             contentDiv.appendChild(textMessage);
 
-            // Add sending indicator
-            const sendingText = document.createElement("span");
-            sendingText.className = "text-xs opacity-70 block text-right";
-            sendingText.textContent = "Sending...";
+            // Add sending indicator with spinner
+            const sendingText = document.createElement("div");
+            sendingText.className = "flex items-center justify-center text-xs opacity-70 mt-2";
+            sendingText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
             contentDiv.appendChild(sendingText);
 
             messageDiv.appendChild(contentDiv);
             document.getElementById("chatMessages").appendChild(messageDiv);
 
             // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+
+        // Auto-scroll chat to bottom on page load
+        window.addEventListener('load', function () {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 
@@ -289,7 +381,7 @@
                 type: 'voice',
                 senderId,
                 filePath,
-                voiceEmotion, 
+                voiceEmotion,
                 textEmotion,
                 productImageUrl,
                 productTitle
@@ -309,81 +401,116 @@
             });
         });
 
+        // Function to get emotion emoji
+        function getEmotionEmoji(emotion) {
+            if (!emotion) return "😐";
+
+            switch (emotion.toLowerCase()) {
+                case "sad": return "😢";
+                case "joy": return "😄";
+                case "love": return "❤️";
+                case "angry": return "😠";
+                case "fear": return "😨";
+                case "surprise": return "😲";
+                default: return "😐";
+            }
+        }
+
         // Generic function to add messages to chat
         function addMessageToChat(messageData) {
             // Check if the "No messages yet" placeholder exists and remove it
             const noMessagesPlaceholder = document.querySelector("#chatMessages p.text-gray-500");
             if (noMessagesPlaceholder) {
-                noMessagesPlaceholder.parentElement.remove();
+                noMessagesPlaceholder.parentElement.parentElement.remove();
             }
 
             const messageDiv = document.createElement("div");
             messageDiv.className = "flex justify-start mb-4"; // adjust alignment for received message
 
             const contentDiv = document.createElement("div");
-            contentDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-4 shadow-sm";
+            contentDiv.className = "bg-gradient-to-r from-gray-100 to-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-4 shadow-sm";
 
             // Product Section if product exists
             if (messageData.productImageUrl && messageData.productTitle) {
                 const productWrapper = document.createElement("div");
-                productWrapper.className = "flex items-center gap-3 mb-2";
+                productWrapper.className = "flex items-center gap-3 mb-2 bg-white/20 p-2 rounded-lg";
 
                 const productImg = document.createElement("img");
                 productImg.src = messageData.productImageUrl;
                 productImg.alt = "Product";
-                productImg.className = "w-12 h-12 object-cover rounded-xl";
+                productImg.className = "w-12 h-12 object-cover rounded-xl shadow-sm";
+
+                const productInfo = document.createElement("div");
 
                 const title = document.createElement("span");
                 title.textContent = messageData.productTitle;
                 title.className = "font-semibold text-lg";
 
+                productInfo.appendChild(title);
                 productWrapper.appendChild(productImg);
-                productWrapper.appendChild(title);
+                productWrapper.appendChild(productInfo);
                 contentDiv.appendChild(productWrapper);
             }
 
             // Content based on message type
             if (messageData.type === 'voice') {
+                // Audio container
+                const audioContainer = document.createElement("div");
+                audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
+
                 // Audio Section
                 const audio = document.createElement("audio");
                 audio.controls = true;
-                audio.className = "w-full mb-2";
+                audio.className = "w-full";
                 const source = document.createElement("source");
                 source.src = messageData.filePath;
                 source.type = "audio/webm";
                 audio.appendChild(source);
-                contentDiv.appendChild(audio);
 
-                // Emotion Text if emotion exists
+                audioContainer.appendChild(audio);
+                contentDiv.appendChild(audioContainer);
+
+                // Emotion Tags container
+                const emotionsContainer = document.createElement("div");
+                emotionsContainer.className = "flex flex-wrap gap-2 mt-2";
+
+                // Voice Emotion Tag if exists
                 if (messageData.voiceEmotion) {
-                    const emotionSpan = document.createElement("span");
-                    emotionSpan.textContent = messageData.voiceEmotion;
-                    emotionSpan.className = "italic text-sm opacity-70 block";
-                    contentDiv.appendChild(emotionSpan);
+                    const emotionTag = document.createElement("div");
+                    emotionTag.className = "inline-flex items-center bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs";
+                    emotionTag.innerHTML = `<i class="fas fa-microphone mr-1" title="Voice Emotion"></i> ${getEmotionEmoji(messageData.voiceEmotion)} ${messageData.voiceEmotion}`;
+                    emotionsContainer.appendChild(emotionTag);
                 }
+
+                // Text Emotion Tag if exists
                 if (messageData.textEmotion) {
-                    const emotionSpan = document.createElement("span");
-                    emotionSpan.textContent = messageData.textEmotion;
-                    emotionSpan.className = "italic text-sm opacity-70 block";
-                    contentDiv.appendChild(emotionSpan);
+                    const emotionTag = document.createElement("div");
+                    emotionTag.className = "inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs";
+                    emotionTag.innerHTML = `<i class="fas fa-comment-alt mr-1" title="Text Emotion"></i> ${getEmotionEmoji(messageData.textEmotion)} ${messageData.textEmotion}`;
+                    emotionsContainer.appendChild(emotionTag);
                 }
+
+                contentDiv.appendChild(emotionsContainer);
+
             } else if (messageData.type === 'text') {
                 // Text message
                 const textParagraph = document.createElement("p");
-                textParagraph.className = "mb-2";
+                textParagraph.className = "mb-2 leading-relaxed";
                 textParagraph.textContent = messageData.textContent;
                 contentDiv.appendChild(textParagraph);
+
+                // Text Emotion Tag if exists
                 if (messageData.emotion) {
-                    const emotionSpan = document.createElement("span");
-                    emotionSpan.textContent = messageData.emotion;
-                    emotionSpan.className = "italic text-sm opacity-70 block";
-                    contentDiv.appendChild(emotionSpan);
+                    const emotionTag = document.createElement("div");
+                    emotionTag.className = "inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs";
+                    emotionTag.innerHTML = `<i class="fas fa-comment-alt mr-1" title="Text Emotion"></i> ${getEmotionEmoji(messageData.emotion)} ${messageData.emotion}`;
+                    contentDiv.appendChild(emotionTag);
                 }
             }
 
             // Timestamp
             const timestamp = document.createElement("span");
-            timestamp.className = "text-xs opacity-70 block text-right";
+            timestamp.className = "text-xs opacity-70 block text-right mt-2";
             timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             contentDiv.appendChild(timestamp);
 
@@ -404,11 +531,10 @@
                 // Show connection error message to user
                 const chatMessages = document.getElementById("chatMessages");
                 const errorMessage = document.createElement("div");
-                errorMessage.className = "bg-red-100 text-red-700 p-3 rounded-md text-center";
-                errorMessage.textContent = "Connection error. Please refresh the page and try again.";
+                errorMessage.className = "bg-red-100 text-red-700 p-3 rounded-md text-center m-4";
+                errorMessage.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Connection error. Please refresh the page and try again.';
                 chatMessages.appendChild(errorMessage);
             });
     </script>
 </body>
 </html>
-

@@ -52,6 +52,17 @@ namespace FinalProject.Data
                     await userManager.AddToRoleAsync(customer, SD.Role_Cust);
                 }
             }
+            var custEmail2 = "cust2@gmail.com";
+            var customer2 = await userManager.FindByNameAsync(custEmail2);
+            if (customer2 == null)
+            {
+                customer2 = new IdentityUser { UserName = custEmail2, Email = custEmail2 };
+                var createCustResult = await userManager.CreateAsync(customer2, "Cust123!");
+                if (createCustResult.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(customer2, SD.Role_Cust);
+                }
+            }
             //var productList = new List<Product>()
             //{
             //    new Product

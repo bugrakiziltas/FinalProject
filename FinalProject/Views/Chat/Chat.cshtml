@@ -20,7 +20,7 @@
         <div class="bg-blue-600 text-white p-4 shadow-md flex items-center">
             <img src="/api/placeholder/40/40" alt="Profile" class="w-10 h-10 rounded-full mr-3">
             <div>
-                <h2 class="font-semibold text-lg">Chat</h2>
+                <h2 class="font-semibold text-lg">Customer Support</h2>
                 <p class="text-xs text-blue-200">Online</p>
             </div>
         </div>
@@ -81,21 +81,50 @@
                 </button>
             </div>
 
-            <!-- Voice Recording Controls -->
+            <!-- Voice Recording & Upload Controls -->
             <form id="voiceForm" method="post" enctype="multipart/form-data"
                   asp-controller="Chat"
                   asp-action="UploadVoiceMessage"
-                  class="flex items-center space-x-2">
+                  class="flex flex-col space-y-2">
                 <input type="hidden" name="receiverId" value="@receiverId" />
                 <input type="hidden" name="productId" value="@ViewBag.productId" />
-                <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
 
-                <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition">
-                    🎤 Record
-                </button>
-                <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50">
-                    ⏹️ Stop
-                </button>
+                <!-- Voice Upload Option -->
+                <div class="flex items-center p-2 bg-gray-100 rounded-lg">
+                    <label for="fileUpload" class="cursor-pointer flex items-center text-gray-700 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload Voice Message
+                    </label>
+                    <input type="file" name="audioFile" id="fileUpload" accept="audio/*" class="hidden">
+                    <span id="fileName" class="ml-2 text-sm text-gray-500">No file selected</span>
+                </div>
+
+                <!-- Recording Controls -->
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="startRecord" class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition flex-shrink-0">
+                        🎤 Record
+                    </button>
+                    <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition opacity-50 flex-shrink-0">
+                        ⏹️ Stop
+                    </button>
+                    <div id="recordingStatus" class="text-sm text-gray-500 hidden">
+                        <span class="animate-pulse">●</span> Recording...
+                    </div>
+                    <div class="grow"></div>
+                    <button type="submit" id="sendVoice" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition flex items-center space-x-1 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <span>Send</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Audio Preview -->
+                <div id="audioPreview" class="hidden">
+                    <audio controls class="w-full" id="previewAudio"></audio>
+                </div>
             </form>
 
             <!-- Text Message Form -->
@@ -108,8 +137,11 @@
                 <input type="text" name="textContent" id="textInput"
                        class="flex-grow border rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                        placeholder="Type your message..." />
-                <button type="submit" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition">
-                    📤
+                <button type="submit" class="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition flex items-center space-x-1">
+                    <span>Send</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                 </button>
             </form>
         </div>
@@ -119,9 +151,15 @@
         // Voice recording functionality
         let mediaRecorder;
         let audioChunks = [];
+        let audioBlob = null;
         const startRecordBtn = document.getElementById('startRecord');
         const stopRecordBtn = document.getElementById('stopRecord');
-        const audioInput = document.getElementById('audioInput');
+        const sendVoiceBtn = document.getElementById('sendVoice');
+        const fileUploadInput = document.getElementById('fileUpload');
+        const fileNameDisplay = document.getElementById('fileName');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const audioPreview = document.getElementById('audioPreview');
+        const previewAudio = document.getElementById('previewAudio');
         const messagesList = document.getElementById('messagesList');
 
         // Toggle buttons and forms
@@ -129,6 +167,34 @@
         const toggleTextBtn = document.getElementById('toggleText');
         const voiceForm = document.getElementById('voiceForm');
         const textForm = document.getElementById('textForm');
+
+        // Show upload file name
+        fileUploadInput.addEventListener('change', () => {
+            if (fileUploadInput.files.length > 0) {
+                const file = fileUploadInput.files[0];
+                fileNameDisplay.textContent = file.name;
+
+                // Create URL for the audio preview
+                const fileURL = URL.createObjectURL(file);
+                previewAudio.src = fileURL;
+                audioPreview.classList.remove('hidden');
+
+                // Enable send button
+                sendVoiceBtn.disabled = false;
+
+                // Reset any recording
+                audioChunks = [];
+                audioBlob = null;
+            } else {
+                fileNameDisplay.textContent = 'No file selected';
+                audioPreview.classList.add('hidden');
+
+                // Disable send button if no recording either
+                if (!audioBlob) {
+                    sendVoiceBtn.disabled = true;
+                }
+            }
+        });
 
         // Toggle between voice and text input
         toggleVoiceBtn.addEventListener('click', () => {
@@ -151,16 +217,24 @@
 
         startRecordBtn.addEventListener("click", async () => {
             try {
+                // Reset any uploaded file
+                fileUploadInput.value = '';
+                fileNameDisplay.textContent = 'No file selected';
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 mediaRecorder.start();
 
                 mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
 
+                // Update UI
                 startRecordBtn.disabled = true;
                 startRecordBtn.classList.add('opacity-50');
                 stopRecordBtn.disabled = false;
                 stopRecordBtn.classList.remove('opacity-50');
+                recordingStatus.classList.remove('hidden');
+                audioPreview.classList.add('hidden');
+                sendVoiceBtn.disabled = true;
             } catch (err) {
                 console.error('Error accessing microphone:', err);
                 alert('Could not access microphone. Please check permissions.');
@@ -168,25 +242,63 @@
         });
 
         stopRecordBtn.addEventListener("click", () => {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
 
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                mediaRecorder.onstop = async () => {
+                    audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                    const audioURL = URL.createObjectURL(audioBlob);
+
+                    // Show audio preview
+                    previewAudio.src = audioURL;
+                    audioPreview.classList.remove('hidden');
+
+                    // Reset UI
+                    startRecordBtn.disabled = false;
+                    startRecordBtn.classList.remove('opacity-50');
+                    stopRecordBtn.disabled = true;
+                    stopRecordBtn.classList.add('opacity-50');
+                    recordingStatus.classList.add('hidden');
+                    sendVoiceBtn.disabled = false;
+                };
+
+                // Stop all tracks to release microphone
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Handle form submission
+        voiceForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            // Prepare form data
+            const formData = new FormData(voiceForm);
+
+            // If we have a recorded audio, add it to form data
+            if (audioBlob) {
                 const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                audioInput.files = dataTransfer.files;
+                formData.set("audioFile", file);
+            }
 
-                document.getElementById("voiceForm").submit();
-
-                // Reset UI
-                startRecordBtn.disabled = false;
-                startRecordBtn.classList.remove('opacity-50');
-                stopRecordBtn.disabled = true;
-                stopRecordBtn.classList.add('opacity-50');
-            };
-
-            audioChunks = [];
+            // Submit the form via AJAX to maintain SPA experience
+            fetch(voiceForm.action, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    // Reset form
+                    audioBlob = null;
+                    audioChunks = [];
+                    audioPreview.classList.add('hidden');
+                    fileUploadInput.value = '';
+                    fileNameDisplay.textContent = 'No file selected';
+                    sendVoiceBtn.disabled = true;
+                } else {
+                    console.error('Error sending voice message');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
         });
 
         // SignalR connection setup
@@ -230,6 +342,14 @@
             audio.controls = true;
             audio.className = "w-full mb-2";
 
+            // Add emotion indicator if available
+            if (voiceEmotion) {
+                const emotionDiv = document.createElement("div");
+                emotionDiv.className = "text-xs text-gray-600 mb-1";
+                emotionDiv.textContent = `Detected emotion: ${voiceEmotion}`;
+                messageDiv.appendChild(emotionDiv);
+            }
+
             const timestamp = document.createElement("span");
             timestamp.className = "text-xs opacity-70 block text-right";
             timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -243,7 +363,7 @@
         });
 
         // Handle incoming text messages
-        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle,emotion) => {
+        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion) => {
             const listItem = document.createElement("div");
             listItem.className = "flex justify-start";
 
@@ -273,6 +393,14 @@
                 messageDiv.appendChild(productInfo);
             }
 
+            // Add emotion indicator if available
+            if (emotion) {
+                const emotionDiv = document.createElement("div");
+                emotionDiv.className = "text-xs text-gray-600 mb-1";
+                emotionDiv.textContent = `Detected emotion: ${emotion}`;
+                messageDiv.appendChild(emotionDiv);
+            }
+
             const textParagraph = document.createElement("p");
             textParagraph.className = "mb-2";
             textParagraph.textContent = textContent;
@@ -290,6 +418,11 @@
         });
 
         connection.start().catch(err => console.error(err));
+
+        // Auto-scroll to bottom on page load
+        window.onload = function () {
+            messagesList.scrollTop = messagesList.scrollHeight;
+        };
     </script>
 </body>
 </html>
