@@ -1,32 +1,40 @@
 ﻿@model List<Order>
 
-<h2>My Purchases</h2>
+<h2 class="mt-4 mb-4 text-center">My Purchases</h2>
 
 @if (!Model.Any())
 {
-    <p>No purchases found.</p>
+    <div class="alert alert-info text-center">No purchases found.</div>
 }
 else
 {
-    @foreach (var order in Model)
+    foreach (var order in Model)
     {
-        <div class="card my-3">
-            <div class="card-header">
-                <strong>Order Date:</strong> @order.CreatedOn
+        <div class="border rounded p-3 mb-4 shadow-sm">
+            <h5 class="mb-3 text-muted"><strong>Order Date:</strong> @order.CreatedOn.ToString()</h5>
+
+            <div class="row">
+                @foreach (var item in order.BuyedProducts)
+                {
+                    <div class="col-md-6 mb-3 d-flex">
+                        <img src="~/Images/@item.ImageUrl" alt="@item.Name" class="img-thumbnail me-3" style="width: 100px; height: 100px; object-fit: cover;" />
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">@item.Name</h6>
+                            <p class="mb-1 text-muted">$@item.Price</p>
+                            <a asp-controller="Chat"
+                               asp-action="Chat"
+                               asp-route-chatWithUserId="@ViewBag.crmId"
+                               asp-route-productId="@item.Id"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-chat-dots"></i> Chat with Support
+                            </a>
+                        </div>
+                    </div>
+                }
             </div>
-            <div class="card-body">
-                <ul>
-                    @foreach (var item in order.BuyedProducts)
-                    {
-                        <li>
-                            <strong>@item.Name</strong> - $@item.Price
-                        </li>
-                        <li>
-                            <a asp-controller="Chat" asp-action="Chat" asp-route-chatWithUserId="@ViewBag.crmId" asp-route-productId="@item.Id">Chat with Support</a>
-                        </li>
-                    }
-                </ul>
-                <p><strong>Total:</strong> $@order.Total</p>
+
+            <div class="text-end mt-3">
+                <strong>Total:</strong> <span class="fs-5 text-success">$@order.Total</span>
             </div>
         </div>
     }

@@ -1,24 +1,29 @@
 ﻿@model Product
-<form asp-controller="Product" asp-action="AddToCart" method="post">
-    <input hidden asp-for="Id" />
-    <input hidden asp-for="Name" />
-    <input hidden asp-for="Description" />
-    <input hidden asp-for="Price" />
-    <input hidden asp-for="ImageUrl" />
-    <div class="item features-image сol-12 col-md-6 col-lg-4">
-        <div class="item-wrapper">
-            <div class="item-img">
-                <img src="~/Images/@Model.ImageUrl" alt="Coffee Shop" title="">
-            </div>
-            <div class="item-content">
 
-                <h6 class="item-subtitle mbr-fonts-style mt-1 display-7"><strong>@Model.Name</strong></h6>
-                <p class="mbr-text mbr-fonts-style mt-3 display-7">@Model.Description</p>
-                <p class="mbr-text mbr-fonts-style mt-3 display-7">@Model.Price.ToString("c")</p>
+<form asp-controller="Product" asp-action="AddToCart" method="post" class="container mt-5">
+    @* Hidden fields for backend *@
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="Name" />
+    <input type="hidden" asp-for="Description" />
+    <input type="hidden" asp-for="Price" />
+    <input type="hidden" asp-for="ImageUrl" />
+
+    <div class="row justify-content-center align-items-center">
+        <div class="col-md-6 text-center">
+            <div class="item-img mb-4">
+                <img src="~/Images/@Model.ImageUrl"
+                     alt="@Model.Name"
+                     class="img-fluid rounded"
+                     style="max-height: 350px; width: auto; object-fit: contain;" />
             </div>
-            <div class="mbr-section-btn item-footer mt-2">
-                <button type="submit" class="btn item-btn btn-primary display-4" target="_self">
-                    <span class="mbrib-cart-add mbr-iconfont mbr-iconfont-btn"></span>Add to cart&nbsp;
+
+            <div class="item-content">
+                <h3 class="fw-bold">@Model.Name</h3>
+                <p class="text-muted">@Model.Description</p>
+                <p class="fs-4 text-primary">@Model.Price.ToString("c")</p>
+
+                <button type="submit" class="btn btn-success px-4 mt-2">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
                 </button>
             </div>
         </div>
