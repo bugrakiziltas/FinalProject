@@ -199,6 +199,7 @@
 
     <script>
         // Tab Switching
+
         const voiceTabBtn = document.getElementById('voiceTabBtn');
         const textTabBtn = document.getElementById('textTabBtn');
         const voiceForm = document.getElementById('voiceForm');
@@ -240,15 +241,34 @@
         // Function to add message to UI immediately
         function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion) {
             const messageDiv = document.createElement("div");
-            messageDiv.className = "flex justify-end mb-4"; // Sender's messages align right
+            messageDiv.className = "flex justify-end mb-4";
 
             const contentDiv = document.createElement("div");
             contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
 
+            // Add product information section
+            const productWrapper = document.createElement("div");
+            productWrapper.className = "flex items-center gap-3 mb-2 bg-white/20 p-2 rounded-lg";
+
+            const productImg = document.createElement("img");
+            productImg.src = "/Images/@ViewBag.ProductImageUrl";
+            productImg.alt = "@ViewBag.ProductTitle";
+            productImg.className = "w-12 h-12 object-cover rounded-xl shadow-sm";
+
+            const productInfo = document.createElement("div");
+            const title = document.createElement("span");
+            title.textContent = "@ViewBag.ProductTitle";
+            title.className = "font-semibold text-lg";
+
+            productInfo.appendChild(title);
+            productWrapper.appendChild(productImg);
+            productWrapper.appendChild(productInfo);
+            contentDiv.appendChild(productWrapper);
+
+            // Rest of your existing content logic...
             if (isVoice && audioPath) {
                 const audioContainer = document.createElement("div");
                 audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
-
                 const audio = document.createElement("audio");
                 audio.src = audioPath;
                 audio.controls = true;

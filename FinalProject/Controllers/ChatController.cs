@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Protocol.Plugins;
 using Stripe;
+using Stripe.Climate;
 using System.Diagnostics;
 using System.Security.Claims;
 
@@ -34,7 +35,7 @@ namespace FinalProject.Controllers
 
         [HttpGet]
         [Route("/chat")]
-        public async Task<IActionResult> Chat(Guid chatWithUserId, Guid productId)
+        public async Task<IActionResult> Chat(Guid chatWithUserId, Guid productId, string imageUrl, string productName)
         {   
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var user = await _identityService.GetUserByEmailAsync(claimsIdentity.Name);
@@ -48,6 +49,8 @@ namespace FinalProject.Controllers
 
             ViewBag.ChatWithUserId = chatWithUserId;
             ViewBag.ProductId = productId;
+            ViewBag.ProductTitle = productName;
+            ViewBag.ProductImageUrl= "/Images/" + imageUrl;
             return View(messages);
         }
 
@@ -423,6 +426,8 @@ namespace FinalProject.Controllers
             {
                 ViewBag.UserType = "Stressful";
             }
+            ViewBag.ProductImageUrl = messages.First().Product.ImageUrl;
+            ViewBag.ProductTitle = messages.First().Product.Name;
             return View(messages);
         }
 

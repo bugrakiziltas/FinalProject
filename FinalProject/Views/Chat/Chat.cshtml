@@ -147,6 +147,12 @@
         </div>
     </div>
 
+    <!-- Hidden elements to store product data -->
+    <div id="productData" style="display: none;">
+        <span id="productTitle">@ViewBag.ProductTitle</span>
+        <span id="productImageUrl">@ViewBag.ProductImageUrl</span>
+    </div>
+
     <script>
         // Voice recording functionality
         let mediaRecorder;
@@ -168,13 +174,40 @@
         const voiceForm = document.getElementById('voiceForm');
         const textForm = document.getElementById('textForm');
 
-        // Function to add message to UI immediately
-        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion) {
+        // Get product data (you might need to pass this from your controller)
+        const productTitle = document.getElementById('productTitle')?.textContent || '';
+        const productImageUrl = document.getElementById('productImageUrl')?.textContent || '';
+
+        // Function to add message to UI immediately - FIXED VERSION
+        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion, showProduct = true) {
             const listItem = document.createElement("div");
             listItem.className = "flex justify-end"; // Sender's messages align right
 
             const messageDiv = document.createElement("div");
             messageDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-3 shadow-sm";
+
+            // Add product info if available and requested
+            if (showProduct && productTitle) {
+                const productInfo = document.createElement("div");
+                productInfo.className = "flex items-center mb-2 space-x-3";
+
+                if (productImageUrl) {
+                    const productImg = document.createElement("img");
+                    productImg.src = productImageUrl;
+                    productImg.alt = productTitle;
+                    productImg.className = "w-16 h-16 object-cover rounded-lg";
+                    productInfo.appendChild(productImg);
+                }
+
+                const productTitleDiv = document.createElement("div");
+                const productTitleP = document.createElement("p");
+                productTitleP.className = "font-semibold";
+                productTitleP.textContent = productTitle;
+                productTitleDiv.appendChild(productTitleP);
+                productInfo.appendChild(productTitleDiv);
+
+                messageDiv.appendChild(productInfo);
+            }
 
             if (isVoice && audioPath) {
                 const audio = document.createElement("audio");
@@ -306,7 +339,7 @@
             }
         });
 
-        // Handle voice form submission - NO REDIRECTS
+        // Handle voice form submission - FIXED VERSION
         voiceForm.addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -328,9 +361,9 @@
             }
 
             try {
-                // Show message immediately in sender's UI
+                // Show message immediately in sender's UI WITH PRODUCT INFO
                 if (audioURL) {
-                    addMessageToUI(true, null, audioURL, null, null);
+                    addMessageToUI(true, null, audioURL, null, null, true);
                 }
 
                 // Send via AJAX - NO REDIRECT
@@ -359,7 +392,7 @@
             }
         });
 
-        // Handle text form submission - NO REDIRECTS
+        // Handle text form submission - FIXED VERSION
         textForm.addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -372,8 +405,8 @@
             const productId = document.querySelector('input[name="productId"]').value;
 
             try {
-                // Show message immediately in sender's UI
-                addMessageToUI(false, textContent, null, null, null);
+                // Show message immediately in sender's UI WITH PRODUCT INFO
+                addMessageToUI(false, textContent, null, null, null, true);
 
                 // Clear input immediately
                 textInput.value = '';

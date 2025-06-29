@@ -25,6 +25,8 @@ else
                                asp-action="Chat"
                                asp-route-chatWithUserId="@ViewBag.crmId"
                                asp-route-productId="@item.Id"
+                               asp-route-imageUrl="@item.ImageUrl"
+                               asp-route-productName="@item.Name"
                                class="btn btn-outline-primary btn-sm">
                                 <i class="bi bi-chat-dots"></i> Chat with Support
                             </a>
