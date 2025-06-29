@@ -23,5 +23,7 @@ namespace FinalProject.Entities
         public DateTime Created { get; set; }
         public string? VoiceEmotion { get; set; } = null;
         public string? TextEmotion { get; set; } = null;
+        public double? voiceConfidenceRate { get; set; } = null;
+        public double? textConfidenceRate { get; set; } = null;
     }
 }

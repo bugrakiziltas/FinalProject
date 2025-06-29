@@ -440,7 +440,8 @@
             .build();
 
         // Handle incoming voice messages
-        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle) => {
+        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate) => {
+            console.log("ReceiveMessage triggered", senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate);
             const listItem = document.createElement("div");
             listItem.className = "flex justify-start";
 
@@ -502,7 +503,8 @@
         });
 
         // Handle incoming text messages
-        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion) => {
+        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate) => {
+            console.log("ReceiveTextMessage triggered", textContent, productImageUrl, productTitle, emotion, confidenceRate);
             const listItem = document.createElement("div");
             listItem.className = "flex justify-start";
 

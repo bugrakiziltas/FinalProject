@@ -8,6 +8,50 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <title>Customer Support Chat</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        .confidence-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+            .confidence-tooltip::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border: 5px solid transparent;
+                border-top-color: rgba(0, 0, 0, 0.9);
+            }
+
+            .confidence-tooltip.show {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .emotion-tag {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .emotion-tag:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden h-[90vh] flex flex-col">
@@ -90,16 +134,24 @@
                                 <div class="flex flex-wrap gap-2 mt-2">
                                     @if (message.VoiceEmotion != null)
                                     {
-                                        <div class="inline-flex items-center bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                                        <div class="emotion-tag inline-flex items-center bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs"
+                                             onclick="showConfidenceTooltip(this, @(message.voiceConfidenceRate ?? 0))">
                                             <i class="fas fa-microphone mr-1" title="Voice Emotion"></i>
                                             @GetEmotionEmoji(message.VoiceEmotion) @message.VoiceEmotion
+                                            <div class="confidence-tooltip">
+                                                Confidence: @((message.voiceConfidenceRate ?? 0).ToString("P1"))
+                                            </div>
                                         </div>
                                     }
                                     @if (message.TextEmotion != null)
                                     {
-                                        <div class="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                        <div class="emotion-tag inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                                             onclick="showConfidenceTooltip(this, @(message.textConfidenceRate ?? 0))">
                                             <i class="fas fa-comment-alt mr-1" title="Text Emotion"></i>
                                             @GetEmotionEmoji(message.TextEmotion) @message.TextEmotion
+                                            <div class="confidence-tooltip">
+                                                Confidence: @((message.textConfidenceRate ?? 0).ToString("P1"))
+                                            </div>
                                         </div>
                                     }
                                 </div>
@@ -109,9 +161,13 @@
                                 <p class="mb-2 leading-relaxed">@message.TextContent</p>
                                 @if (message.TextEmotion != null)
                                 {
-                                    <div class="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                    <div class="emotion-tag inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                                         onclick="showConfidenceTooltip(this, @(message.textConfidenceRate ?? 0))">
                                         <i class="fas fa-comment-alt mr-1" title="Text Emotion"></i>
                                         @GetEmotionEmoji(message.TextEmotion) @message.TextEmotion
+                                        <div class="confidence-tooltip">
+                                            Confidence: @((message.textConfidenceRate ?? 0).ToString("P1"))
+                                        </div>
                                     </div>
                                 }
                             }
@@ -198,8 +254,35 @@
     }
 
     <script>
-        // Tab Switching
+        // Confidence Tooltip Functions
+        function showConfidenceTooltip(element, confidenceRate) {
+            // Hide all other tooltips first
+            document.querySelectorAll('.confidence-tooltip').forEach(tooltip => {
+                tooltip.classList.remove('show');
+            });
 
+            // Show the clicked tooltip
+            const tooltip = element.querySelector('.confidence-tooltip');
+            if (tooltip) {
+                tooltip.classList.add('show');
+
+                // Hide tooltip after 3 seconds
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // Hide tooltips when clicking outside
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.emotion-tag')) {
+                document.querySelectorAll('.confidence-tooltip').forEach(tooltip => {
+                    tooltip.classList.remove('show');
+                });
+            }
+        });
+
+        // Tab Switching
         const voiceTabBtn = document.getElementById('voiceTabBtn');
         const textTabBtn = document.getElementById('textTabBtn');
         const voiceForm = document.getElementById('voiceForm');
@@ -239,7 +322,7 @@
         stopRecordBtn.addEventListener('click', stopRecording);
 
         // Function to add message to UI immediately
-        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion) {
+        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion, voiceConfidence, textConfidence) {
             const messageDiv = document.createElement("div");
             messageDiv.className = "flex justify-end mb-4";
 
@@ -265,7 +348,7 @@
             productWrapper.appendChild(productInfo);
             contentDiv.appendChild(productWrapper);
 
-            // Rest of your existing content logic...
+            // Rest of content logic...
             if (isVoice && audioPath) {
                 const audioContainer = document.createElement("div");
                 audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
@@ -282,11 +365,16 @@
                 contentDiv.appendChild(textParagraph);
             }
 
-            // Show emotion if available
+            // Show emotion with confidence if available
             if (emotion || textEmotion) {
                 const emotionDiv = document.createElement("div");
                 emotionDiv.className = "text-xs text-blue-200 mb-1";
-                emotionDiv.textContent = `Detected emotion: ${emotion || textEmotion}`;
+
+                let emotionText = '';
+                if (emotion) emotionText += `Voice: ${emotion}`;
+                if (textEmotion) emotionText += (emotionText ? ', Text: ' : 'Text: ') + textEmotion;
+
+                emotionDiv.textContent = `Detected emotion: ${emotionText}`;
                 contentDiv.appendChild(emotionDiv);
             }
 
@@ -382,7 +470,7 @@
             try {
                 // Show message immediately in sender's UI
                 if (audioURL) {
-                    addMessageToUI(true, null, audioURL, null, null);
+                    addMessageToUI(true, null, audioURL, null, null, null, null);
                 }
 
                 // Send via AJAX - NO REDIRECT
@@ -424,7 +512,7 @@
 
             try {
                 // Show message immediately in sender's UI
-                addMessageToUI(false, textContent, null, null, null);
+                addMessageToUI(false, textContent, null, null, null, null, null);
 
                 // Clear input immediately
                 textInput.value = '';
@@ -462,9 +550,9 @@
             .withUrl("/chathub")
             .build();
 
-        // Handle voice messages
-        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle) => {
-            console.log("Voice message received:", { senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle });
+        // Handle voice messages - Updated with confidence rates
+        connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate) => {
+            console.log("Voice message received:", { senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate });
             addMessageToChat({
                 type: 'voice',
                 senderId,
@@ -472,20 +560,23 @@
                 voiceEmotion,
                 textEmotion,
                 productImageUrl,
-                productTitle
+                productTitle,
+                voiceConfidenceRate,
+                textConfidenceRate
             });
         });
 
-        // Handle text messages
-        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion) => {
-            console.log("Text message received:", { senderId, textContent, productImageUrl, productTitle, emotion });
+        // Handle text messages - Updated with confidence rate
+        connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate) => {
+            console.log("Text message received:", { senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate });
             addMessageToChat({
                 type: 'text',
                 senderId,
                 textContent,
                 productImageUrl,
                 productTitle,
-                emotion
+                emotion,
+                confidenceRate
             });
         });
 
@@ -502,6 +593,29 @@
                 case "surprise": return "😲";
                 default: return "😐";
             }
+        }
+
+        // Function to create emotion tag with confidence tooltip
+        function createEmotionTag(emotion, confidenceRate, isVoiceEmotion = false) {
+            const tag = document.createElement("div");
+            tag.className = `emotion-tag inline-flex items-center ${isVoiceEmotion ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'} px-2 py-1 rounded text-xs`;
+            tag.onclick = () => showConfidenceTooltip(tag, confidenceRate);
+
+            const icon = document.createElement("i");
+            icon.className = `fas ${isVoiceEmotion ? 'fa-microphone' : 'fa-comment-alt'} mr-1`;
+            icon.title = isVoiceEmotion ? "Voice Emotion" : "Text Emotion";
+
+            const emotionText = document.createTextNode(` ${getEmotionEmoji(emotion)} ${emotion}`);
+
+            const tooltip = document.createElement("div");
+            tooltip.className = "confidence-tooltip";
+            tooltip.textContent = `Confidence: ${(confidenceRate * 100).toFixed(1)}%`;
+
+            tag.appendChild(icon);
+            tag.appendChild(emotionText);
+            tag.appendChild(tooltip);
+
+            return tag;
         }
 
         // Generic function to add messages to chat
@@ -564,18 +678,14 @@
 
                 // Voice Emotion Tag if exists
                 if (messageData.voiceEmotion) {
-                    const emotionTag = document.createElement("div");
-                    emotionTag.className = "inline-flex items-center bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs";
-                    emotionTag.innerHTML = `<i class="fas fa-microphone mr-1" title="Voice Emotion"></i> ${getEmotionEmoji(messageData.voiceEmotion)} ${messageData.voiceEmotion}`;
-                    emotionsContainer.appendChild(emotionTag);
+                    const voiceEmotionTag = createEmotionTag(messageData.voiceEmotion, messageData.voiceConfidenceRate, true);
+                    emotionsContainer.appendChild(voiceEmotionTag);
                 }
 
                 // Text Emotion Tag if exists
                 if (messageData.textEmotion) {
-                    const emotionTag = document.createElement("div");
-                    emotionTag.className = "inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs";
-                    emotionTag.innerHTML = `<i class="fas fa-comment-alt mr-1" title="Text Emotion"></i> ${getEmotionEmoji(messageData.textEmotion)} ${messageData.textEmotion}`;
-                    emotionsContainer.appendChild(emotionTag);
+                    const textEmotionTag = createEmotionTag(messageData.textEmotion, messageData.textConfidenceRate, false);
+                    emotionsContainer.appendChild(textEmotionTag);
                 }
 
                 contentDiv.appendChild(emotionsContainer);
@@ -589,9 +699,7 @@
 
                 // Text Emotion Tag if exists
                 if (messageData.emotion) {
-                    const emotionTag = document.createElement("div");
-                    emotionTag.className = "inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs";
-                    emotionTag.innerHTML = `<i class="fas fa-comment-alt mr-1" title="Text Emotion"></i> ${getEmotionEmoji(messageData.emotion)} ${messageData.emotion}`;
+                    const emotionTag = createEmotionTag(messageData.emotion, messageData.confidenceRate, false);
                     contentDiv.appendChild(emotionTag);
                 }
             }

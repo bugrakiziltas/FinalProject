@@ -132,7 +132,7 @@ namespace FinalProject.Controllers
                     voiceMessage.TextContent= TextOfVoice;
                     var textEmotion = await client.RecognizeTextEmotionAsync(TextOfVoice);
                     bool isFirstMessageOfCustomer = IsFirstMessageFromCustomerForProduct(voiceMessage.SenderId, product.Id);
-                    switch (textEmotion)
+                    switch (textEmotion.predictedEmotion)
                     {
                         case 0:
                             voiceMessage.TextEmotion = "sad";
@@ -186,7 +186,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "surprise";
                             break;
                     }
-                if (new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(voiceEmotion))
+                if (new[] { "fear", "disgust", "anger", "angry", "sad" }.Contains(voiceEmotion.predictedEmotion))
                     {
                         if (isFirstMessageOfCustomer)
                         {
@@ -200,7 +200,9 @@ namespace FinalProject.Controllers
                             }
                         }
                     }
-                    voiceMessage.VoiceEmotion = voiceEmotion;
+                    voiceMessage.VoiceEmotion = voiceEmotion.predictedEmotion;
+                    voiceMessage.voiceConfidenceRate=voiceEmotion.confidenceRate;
+                    voiceMessage.textConfidenceRate=textEmotion.confidenceRate;
                 }
                 else
                 {
@@ -213,7 +215,7 @@ namespace FinalProject.Controllers
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
                 await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name);
+                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name, voiceMessage.voiceConfidenceRate, voiceMessage.textConfidenceRate);
                 return Ok(new { success = true });
             }
             await _hubContext.Clients.User(receiverId.ToString())
@@ -248,9 +250,10 @@ namespace FinalProject.Controllers
 
                 if (await client.IsApiHealthyAsync())
                 {
-                    var emotionResultCode = await client.RecognizeTextEmotionAsync(textContent);
+                    var emotionResult = await client.RecognizeTextEmotionAsync(textContent);
+                    message.textConfidenceRate = emotionResult.confidenceRate;
                     bool isFirstMessageOfCustomer = IsFirstMessageFromCustomerForProduct(message.SenderId, product.Id);
-                    switch (emotionResultCode)
+                    switch (emotionResult.predictedEmotion)
                     {
                         case 0:
                             message.TextEmotion = "sad";
@@ -312,7 +315,14 @@ namespace FinalProject.Controllers
             }
             _context.MessageModels.Add(message);
             await _context.SaveChangesAsync();
+            if(message.textConfidenceRate != null)
+            {
+                await _hubContext.Clients.User(receiverId.ToString())
+                .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
+                          "/Images/" + product.ImageUrl, product.Name, message.TextEmotion, message.textConfidenceRate);
 
+                return Ok(new { success = true });
+            }
             await _hubContext.Clients.User(receiverId.ToString())
                 .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
                           "/Images/" + product.ImageUrl, product.Name, message.TextEmotion);

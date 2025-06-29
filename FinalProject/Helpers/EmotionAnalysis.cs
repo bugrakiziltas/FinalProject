@@ -14,7 +14,7 @@ namespace FinalProject.Helpers
             _httpClient = new HttpClient();
             _apiUrl = apiUrl;
         }
-        public async Task<string> RecognizeEmotionAsync(string audioFilePath)
+        public async Task<serResponse> RecognizeEmotionAsync(string audioFilePath)
         {
             try
             {
@@ -29,9 +29,11 @@ namespace FinalProject.Helpers
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(jsonResponse);
-                var predictedEmotion = doc.RootElement.GetProperty("predicted_emotion").GetString();
-
-                return predictedEmotion;
+                var emotionResponse = new serResponse();
+                emotionResponse.predictedEmotion = doc.RootElement.GetProperty("predicted_emotion").GetString();
+                var confidenceScores = doc.RootElement.GetProperty("confidence_scores");
+                emotionResponse.confidenceRate = confidenceScores.GetProperty(emotionResponse.predictedEmotion).GetDouble();
+                return emotionResponse;
             }
             catch (Exception ex)
             {
@@ -64,7 +66,7 @@ namespace FinalProject.Helpers
                 throw;
             }
         }
-        public async Task<int> RecognizeTextEmotionAsync(string text)
+        public async Task<terResponse> RecognizeTextEmotionAsync(string text)
         {
             try
             {
@@ -75,8 +77,10 @@ namespace FinalProject.Helpers
 
                 var jsonResponse = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(jsonResponse);
-                var predictedClass = doc.RootElement.GetProperty("predicted_class").GetInt32();
-                return predictedClass;
+                var emotionResponse=new terResponse();
+                emotionResponse.predictedEmotion = doc.RootElement.GetProperty("predicted_class").GetInt32();
+                emotionResponse.confidenceRate = doc.RootElement.GetProperty("confidence").GetDouble();
+                return emotionResponse;
             }
             catch (Exception ex)
             {
