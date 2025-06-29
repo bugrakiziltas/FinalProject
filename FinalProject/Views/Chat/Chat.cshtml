@@ -168,6 +168,45 @@
         const voiceForm = document.getElementById('voiceForm');
         const textForm = document.getElementById('textForm');
 
+        // Function to add message to UI immediately
+        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion) {
+            const listItem = document.createElement("div");
+            listItem.className = "flex justify-end"; // Sender's messages align right
+
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "bg-blue-500 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-3 shadow-sm";
+
+            if (isVoice && audioPath) {
+                const audio = document.createElement("audio");
+                audio.src = audioPath;
+                audio.controls = true;
+                audio.className = "w-full mb-2";
+                messageDiv.appendChild(audio);
+            } else if (!isVoice && content) {
+                const textParagraph = document.createElement("p");
+                textParagraph.className = "mb-2";
+                textParagraph.textContent = content;
+                messageDiv.appendChild(textParagraph);
+            }
+
+            // Show emotion if available
+            if (emotion || textEmotion) {
+                const emotionDiv = document.createElement("div");
+                emotionDiv.className = "text-xs text-blue-200 mb-1";
+                emotionDiv.textContent = `Detected emotion: ${emotion || textEmotion}`;
+                messageDiv.appendChild(emotionDiv);
+            }
+
+            const timestamp = document.createElement("span");
+            timestamp.className = "text-xs opacity-70 block text-right";
+            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            messageDiv.appendChild(timestamp);
+
+            listItem.appendChild(messageDiv);
+            messagesList.appendChild(listItem);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+
         // Show upload file name
         fileUploadInput.addEventListener('change', () => {
             if (fileUploadInput.files.length > 0) {
@@ -267,38 +306,99 @@
             }
         });
 
-        // Handle form submission
-        voiceForm.addEventListener("submit", function (e) {
+        // Handle voice form submission - NO REDIRECTS
+        voiceForm.addEventListener("submit", async function (e) {
             e.preventDefault();
 
-            // Prepare form data
-            const formData = new FormData(voiceForm);
+            // Prepare form data for upload
+            const formData = new FormData();
+            formData.append('receiverId', document.querySelector('input[name="receiverId"]').value);
+            formData.append('productId', document.querySelector('input[name="productId"]').value);
 
-            // If we have a recorded audio, add it to form data
+            let audioURL = null;
+
+            // Add audio file (either recorded or uploaded)
             if (audioBlob) {
                 const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
-                formData.set("audioFile", file);
+                formData.append("audioFile", file);
+                audioURL = URL.createObjectURL(audioBlob);
+            } else if (fileUploadInput.files.length > 0) {
+                formData.append("audioFile", fileUploadInput.files[0]);
+                audioURL = URL.createObjectURL(fileUploadInput.files[0]);
             }
 
-            // Submit the form via AJAX to maintain SPA experience
-            fetch(voiceForm.action, {
-                method: 'POST',
-                body: formData
-            }).then(response => {
+            try {
+                // Show message immediately in sender's UI
+                if (audioURL) {
+                    addMessageToUI(true, null, audioURL, null, null);
+                }
+
+                // Send via AJAX - NO REDIRECT
+                const response = await fetch('/chat/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
                 if (response.ok) {
-                    // Reset form
+                    // Reset form state
                     audioBlob = null;
                     audioChunks = [];
                     audioPreview.classList.add('hidden');
                     fileUploadInput.value = '';
                     fileNameDisplay.textContent = 'No file selected';
                     sendVoiceBtn.disabled = true;
+
+                    // Message already shown, SignalR will handle receiver's side
                 } else {
                     console.error('Error sending voice message');
+                    // Optionally remove the message from UI on error
                 }
-            }).catch(error => {
+            } catch (error) {
                 console.error('Error:', error);
-            });
+                // Optionally remove the message from UI on error
+            }
+        });
+
+        // Handle text form submission - NO REDIRECTS
+        textForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const textInput = document.getElementById('textInput');
+            const textContent = textInput.value.trim();
+
+            if (!textContent) return;
+
+            const receiverId = document.querySelector('input[name="receiverId"]').value;
+            const productId = document.querySelector('input[name="productId"]').value;
+
+            try {
+                // Show message immediately in sender's UI
+                addMessageToUI(false, textContent, null, null, null);
+
+                // Clear input immediately
+                textInput.value = '';
+
+                // Send via AJAX - NO REDIRECT
+                const response = await fetch('/Chat/SendTextMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `textContent=${encodeURIComponent(textContent)}&receiverId=${receiverId}&productId=${productId}`
+                });
+
+                if (response.ok) {
+                    // Message already shown and input cleared
+                } else {
+                    console.error('Error sending text message');
+                    // Optionally restore the input text on error
+                    textInput.value = textContent;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Optionally restore the input text on error
+                textInput.value = textContent;
+            }
         });
 
         // SignalR connection setup
@@ -342,11 +442,17 @@
             audio.controls = true;
             audio.className = "w-full mb-2";
 
-            // Add emotion indicator if available
-            if (voiceEmotion) {
+            // Add emotion indicators if available
+            if (voiceEmotion || textEmotion) {
                 const emotionDiv = document.createElement("div");
                 emotionDiv.className = "text-xs text-gray-600 mb-1";
-                emotionDiv.textContent = `Detected emotion: ${voiceEmotion}`;
+                let emotionText = "";
+                if (voiceEmotion && textEmotion) {
+                    emotionText = `Voice: ${voiceEmotion}, Text: ${textEmotion}`;
+                } else {
+                    emotionText = `Emotion: ${voiceEmotion || textEmotion}`;
+                }
+                emotionDiv.textContent = emotionText;
                 messageDiv.appendChild(emotionDiv);
             }
 
@@ -417,12 +523,21 @@
             messagesList.scrollTop = messagesList.scrollHeight;
         });
 
-        connection.start().catch(err => console.error(err));
+        // Start SignalR connection
+        connection.start().catch(err => console.error('SignalR connection error:', err));
 
         // Auto-scroll to bottom on page load
         window.onload = function () {
             messagesList.scrollTop = messagesList.scrollHeight;
         };
+
+        // Handle Enter key for text input
+        document.getElementById('textInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                textForm.dispatchEvent(new Event('submit'));
+            }
+        });
     </script>
 </body>
 </html>

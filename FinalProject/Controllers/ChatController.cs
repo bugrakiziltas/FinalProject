@@ -211,11 +211,11 @@ namespace FinalProject.Controllers
             {
                 await _hubContext.Clients.User(receiverId.ToString())
                 .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name);
-                return RedirectToAction("Chat", new { chatWithUserId = receiverId, productId = productId });
+                return Ok(new { success = true });
             }
             await _hubContext.Clients.User(receiverId.ToString())
                 .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, "", "", "/Images/" + product.ImageUrl, product.Name);
-            return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
+            return Ok(new { success = true });
         }
         [HttpPost]
         public async Task<IActionResult> SendTextMessage(string textContent, Guid receiverId, Guid productId)
@@ -314,12 +314,7 @@ namespace FinalProject.Controllers
                 .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
                           "/Images/" + product.ImageUrl, product.Name, message.TextEmotion);
 
-            if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
-            {
-                return RedirectToAction("Chat", new { chatWithUserId = receiverId, productId = productId });
-            }
-
-            return RedirectToAction("ChatDetail", new { userId = receiverId, productId = productId });
+            return Ok(new { success = true });
         }
 
         [Authorize(Roles = "CRM")]

@@ -225,6 +225,7 @@
         // Voice Recording Logic
         let mediaRecorder;
         let audioChunks = [];
+        let audioBlob = null;
         const startRecordBtn = document.getElementById('startRecord');
         const stopRecordBtn = document.getElementById('stopRecord');
         const sendButton = document.getElementById('sendButton');
@@ -236,30 +237,67 @@
         startRecordBtn.addEventListener('click', startRecording);
         stopRecordBtn.addEventListener('click', stopRecording);
 
+        // Function to add message to UI immediately
+        function addMessageToUI(isVoice, content, audioPath, emotion, textEmotion) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "flex justify-end mb-4"; // Sender's messages align right
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+
+            if (isVoice && audioPath) {
+                const audioContainer = document.createElement("div");
+                audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
+
+                const audio = document.createElement("audio");
+                audio.src = audioPath;
+                audio.controls = true;
+                audio.className = "w-full";
+                audioContainer.appendChild(audio);
+                contentDiv.appendChild(audioContainer);
+            } else if (!isVoice && content) {
+                const textParagraph = document.createElement("p");
+                textParagraph.className = "mb-2 leading-relaxed";
+                textParagraph.textContent = content;
+                contentDiv.appendChild(textParagraph);
+            }
+
+            // Show emotion if available
+            if (emotion || textEmotion) {
+                const emotionDiv = document.createElement("div");
+                emotionDiv.className = "text-xs text-blue-200 mb-1";
+                emotionDiv.textContent = `Detected emotion: ${emotion || textEmotion}`;
+                contentDiv.appendChild(emotionDiv);
+            }
+
+            const timestamp = document.createElement("span");
+            timestamp.className = "text-xs opacity-70 block text-right mt-2";
+            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            contentDiv.appendChild(timestamp);
+
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
         async function startRecording() {
             try {
+                // Reset any uploaded file
+                audioInput.value = '';
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
-
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    audioInput.files = createFileList(audioBlob);
-                    sendButton.disabled = false;
-                    sendButton.classList.remove('opacity-50');
-                    clearInterval(recordingInterval);
-                    recordingIndicator.style.width = '0';
-                };
-
                 mediaRecorder.start();
+
+                mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+
+                // Update UI
                 startRecordBtn.disabled = true;
                 startRecordBtn.classList.add('opacity-50');
                 stopRecordBtn.disabled = false;
                 stopRecordBtn.classList.remove('opacity-50');
-                audioChunks = [];
+                sendButton.disabled = true;
+                sendButton.classList.add('opacity-50');
 
                 // Pulse recording indicator
                 let pulse = 0;
@@ -275,93 +313,123 @@
         }
 
         function stopRecording() {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            startRecordBtn.disabled = false;
-            startRecordBtn.classList.remove('opacity-50');
-            stopRecordBtn.disabled = true;
-            stopRecordBtn.classList.add('opacity-50');
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+
+                mediaRecorder.onstop = async () => {
+                    audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+                    // Reset UI
+                    startRecordBtn.disabled = false;
+                    startRecordBtn.classList.remove('opacity-50');
+                    stopRecordBtn.disabled = true;
+                    stopRecordBtn.classList.add('opacity-50');
+                    sendButton.disabled = false;
+                    sendButton.classList.remove('opacity-50');
+                    clearInterval(recordingInterval);
+                    recordingIndicator.style.width = '0';
+                };
+
+                // Stop all tracks to release microphone
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
         }
 
-        function createFileList(blob) {
-            const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            return dataTransfer.files;
-        }
+        // Handle voice form submission - NO REDIRECTS
+        voiceForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
 
-        // Voice Form Submit Handler
-        document.getElementById('voiceForm').addEventListener('submit', function (e) {
-            if (!audioInput.files.length) {
-                e.preventDefault();
+            // Prepare form data for upload
+            const formData = new FormData();
+            formData.append('receiverId', document.querySelector('input[name="receiverId"]').value);
+            formData.append('productId', document.querySelector('input[name="productId"]').value);
+
+            let audioURL = null;
+
+            // Add audio file (either recorded or uploaded)
+            if (audioBlob) {
+                const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
+                formData.append("audioFile", file);
+                audioURL = URL.createObjectURL(audioBlob);
+            } else if (audioInput.files.length > 0) {
+                formData.append("audioFile", audioInput.files[0]);
+                audioURL = URL.createObjectURL(audioInput.files[0]);
+            } else {
                 alert('Please record an audio message first.');
                 return;
             }
 
-            // Add a local message preview while waiting for server response
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
+            try {
+                // Show message immediately in sender's UI
+                if (audioURL) {
+                    addMessageToUI(true, null, audioURL, null, null);
+                }
 
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
+                // Send via AJAX - NO REDIRECT
+                const response = await fetch('/chat/upload', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            // Add the audio player in a nice container
-            const audioContainer = document.createElement("div");
-            audioContainer.className = "rounded-lg bg-black/10 p-2 mb-2";
+                if (response.ok) {
+                    // Reset form state
+                    audioBlob = null;
+                    audioChunks = [];
+                    audioInput.value = '';
+                    sendButton.disabled = true;
+                    sendButton.classList.add('opacity-50');
 
-            const audio = document.createElement("audio");
-            audio.controls = true;
-            audio.className = "w-full";
-            audio.src = URL.createObjectURL(audioInput.files[0]);
-
-            audioContainer.appendChild(audio);
-            contentDiv.appendChild(audioContainer);
-
-            // Add sending indicator with spinner
-            const sendingText = document.createElement("div");
-            sendingText.className = "flex items-center justify-center text-xs opacity-70 mt-2";
-            sendingText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
-            contentDiv.appendChild(sendingText);
-
-            messageDiv.appendChild(contentDiv);
-            document.getElementById("chatMessages").appendChild(messageDiv);
-
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+                    // Message already shown, SignalR will handle receiver's side
+                } else {
+                    console.error('Error sending voice message');
+                    // Optionally remove the message from UI on error
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Optionally remove the message from UI on error
+            }
         });
 
-        // Text Form Submit Handler
-        document.getElementById('textForm').addEventListener('submit', function (e) {
+        // Handle text form submission - NO REDIRECTS
+        textForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
             const textInput = document.getElementById('textInput');
-            if (!textInput.value.trim()) {
-                e.preventDefault();
-                return;
+            const textContent = textInput.value.trim();
+
+            if (!textContent) return;
+
+            const receiverId = document.querySelector('input[name="receiverId"]').value;
+            const productId = document.querySelector('input[name="productId"]').value;
+
+            try {
+                // Show message immediately in sender's UI
+                addMessageToUI(false, textContent, null, null, null);
+
+                // Clear input immediately
+                textInput.value = '';
+
+                // Send via AJAX - NO REDIRECT
+                const response = await fetch('/Chat/SendTextMessage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `textContent=${encodeURIComponent(textContent)}&receiverId=${receiverId}&productId=${productId}`
+                });
+
+                if (response.ok) {
+                    // Message already shown and input cleared
+                } else {
+                    console.error('Error sending text message');
+                    // Optionally restore the input text on error
+                    textInput.value = textContent;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // Optionally restore the input text on error
+                textInput.value = textContent;
             }
-
-            // Add a local message preview while waiting for server response
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "flex justify-end mb-4"; // Align to right (sent by user)
-
-            const contentDiv = document.createElement("div");
-            contentDiv.className = "bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-l-2xl rounded-br-2xl max-w-[80%] p-4 shadow-sm";
-
-            // Add the text message
-            const textMessage = document.createElement("p");
-            textMessage.className = "mb-2";
-            textMessage.textContent = textInput.value;
-            contentDiv.appendChild(textMessage);
-
-            // Add sending indicator with spinner
-            const sendingText = document.createElement("div");
-            sendingText.className = "flex items-center justify-center text-xs opacity-70 mt-2";
-            sendingText.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
-            contentDiv.appendChild(sendingText);
-
-            messageDiv.appendChild(contentDiv);
-            document.getElementById("chatMessages").appendChild(messageDiv);
-
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 
         // Auto-scroll chat to bottom on page load
@@ -419,7 +487,7 @@
         // Generic function to add messages to chat
         function addMessageToChat(messageData) {
             // Check if the "No messages yet" placeholder exists and remove it
-            const noMessagesPlaceholder = document.querySelector("#chatMessages p.text-gray-500");
+            const noMessagesPlaceholder = chatMessages.querySelector('.text-center.text-gray-500');
             if (noMessagesPlaceholder) {
                 noMessagesPlaceholder.parentElement.parentElement.remove();
             }
@@ -515,7 +583,7 @@
             contentDiv.appendChild(timestamp);
 
             messageDiv.appendChild(contentDiv);
-            document.getElementById("chatMessages").appendChild(messageDiv);
+            chatMessages.appendChild(messageDiv);
 
             // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -529,12 +597,19 @@
             .catch(err => {
                 console.error("SignalR connection error:", err);
                 // Show connection error message to user
-                const chatMessages = document.getElementById("chatMessages");
                 const errorMessage = document.createElement("div");
                 errorMessage.className = "bg-red-100 text-red-700 p-3 rounded-md text-center m-4";
                 errorMessage.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Connection error. Please refresh the page and try again.';
                 chatMessages.appendChild(errorMessage);
             });
+
+        // Handle Enter key for text input
+        document.getElementById('textInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                textForm.dispatchEvent(new Event('submit'));
+            }
+        });
     </script>
 </body>
 </html>
