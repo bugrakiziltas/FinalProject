@@ -13,6 +13,6 @@ namespace FinalProject.Dtos.Product
         [Required(ErrorMessage = "Ürün fotoğrafı boş olamaz")]
         public IFormFile Image { get; set; }
         //public string CategoryId { get; set; }
-
+        public Guid CategoryId { get; set; }
     }
 }

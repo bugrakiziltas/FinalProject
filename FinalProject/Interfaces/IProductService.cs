@@ -13,5 +13,6 @@ namespace FinalProject.Interfaces
         Task<Product> GetProductByIdAsync(Guid productId, CancellationToken cancellationToken = default);
         //Task<IEnumerable<Product>> GetMeetingsByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<Product>> GetAllProductsAsync();
+        Task<List<Category>> GetAllCategoriesAsync();
     }
 }

@@ -44,6 +44,7 @@ namespace FinalProject.Services
                 IdentityUser = applicationUser,
                 IdentityUserId = Guid.Parse(applicationUser.Id),
                 CreatedOn = DateTimeOffset.UtcNow,
+                CategoryId = createProductDto.CategoryId,
             };
 
             _applicationDbContext.Add(product);
@@ -84,7 +85,7 @@ namespace FinalProject.Services
             product.Name = updateProductDto.Name;
             product.Price = updateProductDto.Price;
             product.Description = updateProductDto.Description;
-
+            product.CategoryId = updateProductDto.CategoryId;
             _applicationDbContext.Update(product);
             _applicationDbContext.SaveChanges();
 
@@ -118,6 +119,9 @@ namespace FinalProject.Services
         //{
         //    throw new NotImplementedException();
         //}
-
+        public async Task<List<Category>> GetAllCategoriesAsync()
+        {
+            return await _applicationDbContext.Categories.ToListAsync();
+        }
     }
 }

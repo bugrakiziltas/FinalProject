@@ -4,6 +4,7 @@ using FinalProject.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 
 namespace FinalProject.Controllers
@@ -28,6 +29,10 @@ namespace FinalProject.Controllers
         [Route("/create")]
         public async Task<IActionResult> CreateProduct()
         {
+            var categories = await productService.GetAllCategoriesAsync(); // Adjust this based on your service
+
+            // Create SelectListItem collection for the dropdown
+            ViewBag.Categories = new SelectList(categories, "Id", "CategoryName");
             return View();
         }
         [HttpPost]
@@ -57,13 +62,20 @@ namespace FinalProject.Controllers
         {
             var product = await productService.GetProductByIdAsync(id);
             if (product == null) return BadRequest("The product does not exists");
+
+            // Load categories for the dropdown
+            var categories = await productService.GetAllCategoriesAsync(); // Adjust based on your service
+            ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", product.CategoryId);
+
             var productModel = new UpdateProductDto
             {
                 Id = id,
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
+                CategoryId = product.CategoryId // Add this line
             };
+
             ViewBag.ImageUrl = product.ImageUrl;
             return View(productModel);
         }
@@ -71,16 +83,43 @@ namespace FinalProject.Controllers
         [Route("/Update/{id}")]
         public async Task<IActionResult> UpdateProduct([FromForm] UpdateProductDto requestModel)
         {
-            var imageUrl = new string(String.Empty);
+            if (!ModelState.IsValid)
+            {
+                // If validation fails, reload categories for the dropdown
+                var categories = await productService.GetAllCategoriesAsync();
+                ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", requestModel.CategoryId);
+
+                // Get current product to reload image
+                var currentProduct = await productService.GetProductByIdAsync(requestModel.Id);
+                if (currentProduct != null)
+                {
+                    ViewBag.ImageUrl = currentProduct.ImageUrl;
+                }
+
+                return View(requestModel);
+            }
+
+            var imageUrl = string.Empty;
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+
             if (requestModel.Image != null)
             {
+                // Handle new image upload
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "Images");
+                Directory.CreateDirectory(uploadsFolder);
                 imageUrl = Guid.NewGuid().ToString() + requestModel.Image.FileName;
-                if (await productService.UpdateProductAsync(requestModel, imageUrl, userId, CancellationToken.None) == true) return RedirectToAction("Index");
-                return BadRequest("Something went wrong");
+                string serverFolder = Path.Combine(uploadsFolder, imageUrl);
+
+                using (var fileStream = new FileStream(serverFolder, FileMode.Create))
+                {
+                    requestModel.Image.CopyTo(fileStream);
+                }
             }
-            if(await productService.UpdateProductAsync(requestModel, imageUrl, userId, CancellationToken.None) ==true) return RedirectToAction("Index");
+
+            if (await productService.UpdateProductAsync(requestModel, imageUrl, userId, CancellationToken.None) == true)
+                return RedirectToAction("Index");
+
             return BadRequest("Something went wrong");
         }
         [HttpPost]

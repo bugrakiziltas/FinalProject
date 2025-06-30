@@ -13,11 +13,22 @@
         <textarea asp-for="Description" class="form-control" rows="4"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
+
     <div class="mb-3">
         <label asp-for="Price" class="form-label fw-bold">Price</label>
-        <input asp-for="Price" class="form-control" type="number" />
+        <input asp-for="Price" class="form-control" type="number" step="0.01" />
         <span asp-validation-for="Price" class="text-danger"></span>
     </div>
+
+    <!-- New Category Selection -->
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label fw-bold">Category</label>
+        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+            <option value="">Select a category</option>
+        </select>
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    </div>
+
     <hr class="my-4">
 
     <div class="mb-3">
@@ -29,6 +40,7 @@
         </div>
         <span asp-validation-for="Image" class="text-danger"></span>
     </div>
+
     <button type="submit" class="btn btn-primary w-100 py-2">Create</button>
 </form>
 
@@ -36,7 +48,6 @@
     function showImagePreview(event) {
         var imagePreview = document.getElementById('imagePreview');
         var file = event.target.files[0];
-
         if (file) {
             var reader = new FileReader();
             reader.onload = function (e) {
@@ -46,6 +57,7 @@
             reader.readAsDataURL(file);
         }
     }
+
     function showPdfPreview(event) {
         var file = event.target.files[0];
         if (file) {

@@ -12,5 +12,6 @@ namespace FinalProject.Dtos.Product
         [Required(ErrorMessage = "Ürün fiyatı boş olamaz")]
         public decimal Price { get; set; }
         public IFormFile? Image { get; set; }
-    }
+        public Guid CategoryId { get; set; }
+}
 }
