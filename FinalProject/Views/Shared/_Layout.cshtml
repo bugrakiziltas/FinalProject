@@ -160,12 +160,18 @@
                                             <li class="nav-item">
                                                 <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Product Management</a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Logout">Log Out</a>
+                                            </li>
                                         }
 
                                         @if (User.IsInRole(SD.Role_Crm))
                                         {
                                             <li class="nav-item">
                                                 <a class="nav-link text-dark" asp-controller="Chat" asp-action="CRMChats">Chats With Customers</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Logout">Log Out</a>
                                             </li>
                                         }
 
@@ -174,6 +180,10 @@
                                             <li>
                                                 <a class="nav-link text-dark" asp-controller="Order" asp-action="Purchases">My Purchases</a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Logout">Log Out</a>
+                                            </li>
+
 
                                         }
                                         
