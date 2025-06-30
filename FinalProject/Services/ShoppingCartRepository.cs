@@ -43,5 +43,9 @@ namespace FinalProject.Services
             }
             return false;
         }
+        public async Task<int> CountAsync(Guid id)
+        {
+           return await _context.ShoppingCarts.Where(x=>x.IdentityUserId == id).CountAsync();
+        }
     }
 }

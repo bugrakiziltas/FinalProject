@@ -115,5 +115,19 @@ namespace FinalProject.Controllers
 
             return BadRequest("Payment not confirmed.");
         }
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCartItemCount()
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            if (!claimsIdentity.IsAuthenticated)
+            {
+                var count1 = 0;
+                return Json(new { count1 });
+            }
+            var userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            var count = await _shoppingCartRepository.CountAsync(Guid.Parse(userId));
+            return Json(new { count });
+        }
     }
 }

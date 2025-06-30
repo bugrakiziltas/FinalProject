@@ -8,5 +8,6 @@ namespace FinalProject.Interfaces
         Task<IEnumerable<ShoppingCart>> GetShoppingCartItems(Guid id);
         Task<bool> RemoveFromShoppingCart(Guid productId, Guid userId);
         Task<bool> ClearCart(Guid id);
+        Task<int> CountAsync(Guid id);
     }
 }

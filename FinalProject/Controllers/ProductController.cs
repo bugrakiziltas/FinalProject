@@ -62,18 +62,27 @@ namespace FinalProject.Controllers
         }
 
         [HttpGet]
-        [Route("search")]
-        public IActionResult SearchProducts(string searchTerm)
+        public IActionResult Search(string query)
         {
-            var products = _applicationDbContext.Products.AsQueryable();
+            if (string.IsNullOrWhiteSpace(query))
+                return Json(new List<object>());
 
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                products = products.Where(p => p.Name.Contains(searchTerm) || p.Description.Contains(searchTerm));
-            }
+            var results = _applicationDbContext.Products.Include(x => x.Category)
+                .Where(p => p.Name.Contains(query) || p.Category.CategoryName.Contains(query))
+                .Take(6)
+                .Select(p => new
+                {
+                    id = p.Id,
+                    name = p.Name,
+                    category = new
+                    {
+                        categoryName = p.Category.CategoryName
+                    },
+                    url = Url.Action("ProductDetailPage", "Product", new { id = p.Id })
+                })
+                .ToList();
 
-            return View(products);
-
+            return Json(results);
         }
 
         [HttpGet]
