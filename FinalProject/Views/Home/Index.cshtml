@@ -403,54 +403,6 @@
         </div>
     </section>
 
-    <section class="features py-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3 text-center" data-aos="fade-in" data-aos-delay="0">
-                    <div class="py-5">
-                        <svg width="38" height="38" viewBox="0 0 24 24">
-                            <use xlink:href="#calendar"></use>
-                        </svg>
-                        <h4 class="element-title text-capitalize my-3">Book An Appointment</h4>
-                        <p>Need personalized assistance? Schedule a one-on-one appointment with our style experts.</p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center" data-aos="fade-in" data-aos-delay="300">
-                    <div class="py-5">
-                        <svg width="38" height="38" viewBox="0 0 24 24">
-                            <use xlink:href="#shopping-bag"></use>
-                        </svg>
-                        <h4 class="element-title text-capitalize my-3">Pick up in store</h4>
-                        <p>Shop online and collect your items at a nearby store — fast, easy, and convenient. No waiting, no shipping fees.</p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center" data-aos="fade-in" data-aos-delay="600">
-                    <div class="py-5">
-                        <svg width="38" height="38" viewBox="0 0 24 24">
-                            <use xlink:href="#gift"></use>
-                        </svg>
-                        <h4 class="element-title text-capitalize my-3">Special packaging</h4>
-                        <p>
-                            Every order is packed with care in elegant, premium packaging — perfect for gifts or a personal treat.
-
-                        </p>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center" data-aos="fade-in" data-aos-delay="900">
-                    <div class="py-5">
-                        <svg width="38" height="38" viewBox="0 0 24 24">
-                            <use xlink:href="#arrow-cycle"></use>
-                        </svg>
-                        <h4 class="element-title text-capitalize my-3">free global returns</h4>
-                        <p>Shop with confidence. We offer hassle-free returns worldwide, completely free of charge.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-
     <section id="new-arrival" class="new-arrival product-carousel py-5 position-relative overflow-hidden">
         <div class="container">
             <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 mb-3">
@@ -467,12 +419,6 @@
                                 <div class="image-holder position-relative">
                                     <a asp-controller="Product" asp-action="ProductDetailPage" asp-route-id="@product.Id">
                                         <img src="~/Images/@product.ImageUrl" alt="@product.Name" class="product-image img-fluid">
-                                    </a>
-
-                                    <a href="#" class="btn-icon btn-wishlist">
-                                        <svg width="24" height="24" viewBox="0 0 24 24">
-                                            <use xlink:href="#heart"></use>
-                                        </svg>
                                     </a>
 
                                     <div class="product-content">
@@ -514,29 +460,6 @@
         </div>
     </section>
 
-    <section class="collection bg-light position-relative py-5">
-        <div class="container">
-            <div class="row">
-                <div class="title-xlarge text-uppercase txt-fx domino">Collection</div>
-                <div class="collection-item d-flex flex-wrap my-5">
-                    <div class="col-md-6 column-container">
-                        <div class="image-holder">
-                            <img src="images/single-image-2.jpg" alt="collection" class="product-image img-fluid">
-                        </div>
-                    </div>
-                    <div class="col-md-6 column-container bg-white">
-                        <div class="collection-content p-5 m-0 m-md-5">
-                            <h3 class="element-title text-uppercase">Classic winter collection</h3>
-                            <p>
-                                Embrace the season in timeless style. Our Classic Winter Collection features cozy textures, rich colors, and elegant silhouettes — designed to keep you warm while looking effortlessly chic. From everyday essentials to statement pieces, discover winterwear that blends comfort with sophistication.s
-                            </p>
-                            <a href="#" class="btn btn-dark text-uppercase mt-3">Shop Collection</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <section id="best-sellers" class="best-sellers product-carousel py-5 position-relative overflow-hidden">
         <div class="container">
@@ -556,12 +479,6 @@
                                         <img src="~/Images/@product.ImageUrl" alt="@product.Name" class="product-image img-fluid">
                                     </a>
 
-                                    <a href="#" class="btn-icon btn-wishlist">
-                                        <svg width="24" height="24" viewBox="0 0 24 24">
-                                            <use xlink:href="#heart"></use>
-                                        </svg>
-                                    </a>
-
                                     <div class="product-content">
                                         <h5 class="element-title text-uppercase fs-5 mt-3">
                                             <a asp-controller="Product" asp-action="ProductDetailPage" asp-route-id="@product.Id">
@@ -597,26 +514,6 @@
                 <svg width="50" height="50" viewBox="0 0 24 24">
                     <use xlink:href="#arrow-right"></use>
                 </svg>
-            </div>
-        </div>
-    </section>
-
-    <section class="video py-5 overflow-hidden">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="video-content open-up" data-aos="zoom-out">
-                    <div class="video-bg">
-                        <img src="images/video-image.jpg" alt="video" class="video-image img-fluid">
-                    </div>
-                    <div class="video-player">
-                        <a class="youtube" href="https://www.youtube.com/embed/pjtsGzQjFM4">
-                            <svg width="24" height="24" viewBox="0 0 24 24">
-                                <use xlink:href="#play"></use>
-                            </svg>
-                            <img src="images/text-pattern.png" alt="pattern" class="text-rotate">
-                        </a>
-                    </div>
-                </div>
             </div>
         </div>
     </section>
@@ -681,12 +578,6 @@
                                         <img src="~/Images/@product.ImageUrl" alt="@product.Name" class="product-image img-fluid">
                                     </a>
 
-                                    <a href="#" class="btn-icon btn-wishlist">
-                                        <svg width="24" height="24" viewBox="0 0 24 24">
-                                            <use xlink:href="#heart"></use>
-                                        </svg>
-                                    </a>
-
                                     <div class="product-content">
                                         <h5 class="element-title text-uppercase fs-5 mt-3">
                                             <a asp-controller="Product" asp-action="ProductDetailPage" asp-route-id="@product.Id">
@@ -725,73 +616,7 @@
         </div>
     </section>
 
-  @*   <section class="blog py-5">
-        <div class="container">
-            <div class="d-flex flex-wrap justify-content-between align-items-center mt-5 mb-3">
-                <h4 class="text-uppercase">Read Blog Posts</h4>
-                <a href="index.html" class="btn-link">View All</a>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <article class="post-item">
-                        <div class="post-image">
-                            <a href="index.html">
-                                <img src="images/post-image1.jpg" alt="image" class="post-grid-image img-fluid">
-                            </a>
-                        </div>
-                        <div class="post-content d-flex flex-wrap gap-2 my-3">
-                            <div class="post-meta text-uppercase fs-6 text-secondary">
-                                <span class="post-category">Fashion /</span>
-                                <span class="meta-day"> jul 11, 2022</span>
-                            </div>
-                            <h5 class="post-title text-uppercase">
-                                <a href="index.html">How to look outstanding in pastel</a>
-                            </h5>
-                            <p>Dignissim lacus,turpis ut suspendisse vel tellus.Turpis purus,gravida orci,fringilla...</p>
-                        </div>
-                    </article>
-                </div>
-                <div class="col-md-4">
-                    <article class="post-item">
-                        <div class="post-image">
-                            <a href="index.html">
-                                <img src="images/post-image2.jpg" alt="image" class="post-grid-image img-fluid">
-                            </a>
-                        </div>
-                        <div class="post-content d-flex flex-wrap gap-2 my-3">
-                            <div class="post-meta text-uppercase fs-6 text-secondary">
-                                <span class="post-category">Fashion /</span>
-                                <span class="meta-day"> jul 11, 2022</span>
-                            </div>
-                            <h5 class="post-title text-uppercase">
-                                <a href="index.html">Top 10 fashion trend for summer</a>
-                            </h5>
-                            <p>Turpis purus, gravida orci, fringilla dignissim lacus, turpis ut suspendisse vel tellus...</p>
-                        </div>
-                    </article>
-                </div>
-                <div class="col-md-4">
-                    <article class="post-item">
-                        <div class="post-image">
-                            <a href="index.html">
-                                <img src="images/post-image3.jpg" alt="image" class="post-grid-image img-fluid">
-                            </a>
-                        </div>
-                        <div class="post-content d-flex flex-wrap gap-2 my-3">
-                            <div class="post-meta text-uppercase fs-6 text-secondary">
-                                <span class="post-category">Fashion /</span>
-                                <span class="meta-day"> jul 11, 2022</span>
-                            </div>
-                            <h5 class="post-title text-uppercase">
-                                <a href="index.html">Crazy fashion with unique moment</a>
-                            </h5>
-                            <p>Turpis purus, gravida orci, fringilla dignissim lacus, turpis ut suspendisse vel tellus...</p>
-                        </div>
-                    </article>
-                </div>
-            </div>
-        </div>
-    </section> *@
+  
 
     <section class="logo-bar py-5 my-5">
         <div class="container">
@@ -806,73 +631,6 @@
             </div>
         </div>
     </section>
-
-    <section class="newsletter bg-light" style="background: url(images/pattern-bg.png) no-repeat;">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8 py-5 my-5">
-                    <div class="subscribe-header text-center pb-3">
-                        <h3 class="section-title text-uppercase">Sign Up for our newsletter</h3>
-                    </div>
-                    <form id="form" class="d-flex flex-wrap gap-2">
-                        <input type="text" name="email" placeholder="Your Email Addresss" class="form-control form-control-lg">
-                        <button class="btn btn-dark btn-lg text-uppercase w-100">Sign Up</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="instagram position-relative">
-        <div class="d-flex justify-content-center w-100 position-absolute bottom-0 z-1">
-            <a href="https://www.instagram.com/templatesjungle/" class="btn btn-dark px-5">Follow us on Instagram</a>
-        </div>
-        <div class="row g-0">
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item1.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item2.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item3.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item4.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item5.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-            <div class="col-6 col-sm-4 col-md-2">
-                <div class="insta-item">
-                    <a href="https://www.instagram.com/templatesjungle/" target="_blank">
-                        <img src="images/insta-item6.jpg" alt="instagram" class="insta-image img-fluid">
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
    
 
     <script src="~/js/jquery.min.js"></script>

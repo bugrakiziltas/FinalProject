@@ -85,6 +85,12 @@
                         }
                     </div>
                 </div>
+                @if (ViewBag.IsProblematic)
+                {
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Product might have issues
+                    </div>
+                }
             </div>
             <div>
                 <button class="p-2 rounded-full hover:bg-blue-700 transition">
@@ -113,12 +119,6 @@
                                     }
                                     <div>
                                         <span class="font-semibold text-lg">@message.Product.Name</span>
-                                        @if (ViewBag.IsProblematic)
-                                        {
-                                            <div class="mt-1 flex items-center bg-red-100 text-red-700 px-2 py-0.5 rounded-md text-xs font-medium">
-                                                <i class="fas fa-exclamation-triangle mr-1"></i> Product has issues
-                                            </div>
-                                        }
                                     </div>
                                 </div>
                             }

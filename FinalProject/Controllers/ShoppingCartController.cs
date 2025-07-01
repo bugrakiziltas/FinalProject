@@ -96,7 +96,7 @@ namespace FinalProject.Controllers
                 var order = new Order
                 {
                     IdentityUserId = Guid.Parse(userId),
-                    CreatedOn = DateTime.UtcNow,
+                    CreatedOn = DateTime.Now,
                     Total = cartItems.Sum(x => x.Product.Price),
                     BuyedProducts = cartItems.Select(x => x.Product).ToList(),
                 };

@@ -94,6 +94,15 @@ namespace FinalProject.Controllers
 
         }
 
+        [HttpGet]
+        [Authorize]
+        public IActionResult AddToCart()
+        {
+            // Redirect to product list or show an error message
+            TempData["ErrorMessage"] = "Please select a product to add to cart.";
+            return RedirectToAction("Index");
+        }
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddToCart(Product product)

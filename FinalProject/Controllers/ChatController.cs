@@ -117,7 +117,7 @@ namespace FinalProject.Controllers
                 ReceiverId = receiverId.ToString(),
                 MessageType = MessageTypeEnum.Voice,
                 AudioFilePath = $"/voice_messages/{wavFileName}",
-                Created = DateTime.UtcNow,
+                Created = DateTime.Now,
                 ProductId = productId
             };
             
@@ -138,7 +138,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "sad";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -158,7 +158,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "angry";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -172,7 +172,7 @@ namespace FinalProject.Controllers
                             voiceMessage.TextEmotion = "fear";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -190,7 +190,7 @@ namespace FinalProject.Controllers
                     {
                         if (isFirstMessageOfCustomer)
                         {
-                            if (product.problematicComments > 0)
+                            if (product.problematicComments >= 0)
                             {
                                 product.isProblematic = true;
                             }
@@ -241,7 +241,7 @@ namespace FinalProject.Controllers
                 ReceiverId = receiverId.ToString(),
                 MessageType = MessageTypeEnum.Text,
                 TextContent = textContent,
-                Created = DateTime.UtcNow,
+                Created = DateTime.Now,
                 ProductId = productId
             };
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
@@ -259,7 +259,7 @@ namespace FinalProject.Controllers
                             message.TextEmotion = "sad";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -279,7 +279,7 @@ namespace FinalProject.Controllers
                             message.TextEmotion = "angry";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
@@ -293,7 +293,7 @@ namespace FinalProject.Controllers
                             message.TextEmotion = "fear";
                             if (isFirstMessageOfCustomer)
                             {
-                                if (product.problematicComments > 0)
+                                if (product.problematicComments >= 0)
                                 {
                                     product.isProblematic = true;
                                 }
