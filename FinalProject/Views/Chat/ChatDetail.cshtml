@@ -57,7 +57,7 @@
     <div class="max-w-md mx-auto bg-white shadow-xl rounded-xl overflow-hidden h-[90vh] flex flex-col">
         <!-- Enhanced Chat Header -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 shadow-md flex items-center justify-between">
-            <div class="flex items-center">
+            <div class="flex items-center space-x-4">
                 <div class="relative">
                     @if (ViewBag.UserType == "pleased")
                     {
@@ -70,7 +70,7 @@
                 </div>
                 <div>
                     <h2 class="font-semibold text-lg">@Model.FirstOrDefault()?.Sender.UserName</h2>
-                    <div class="flex items-center text-xs">
+                    <div class="flex items-center text-xs mt-1">
                         @if (ViewBag.UserType == "pleased")
                         {
                             <span class="bg-green-500 rounded-full px-2 py-0.5 flex items-center">
@@ -85,18 +85,15 @@
                         }
                     </div>
                 </div>
-                @if (ViewBag.IsProblematic)
-                {
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle mr-1"></i> Product might have issues
-                    </div>
-                }
             </div>
-            <div>
-                <button class="p-2 rounded-full hover:bg-blue-700 transition">
-                    <i class="fas fa-info-circle"></i>
-                </button>
-            </div>
+
+            @if (ViewBag.IsProblematic)
+            {
+                <div class="flex items-center bg-red-500 bg-opacity-20 border border-red-300 rounded-lg px-3 py-2 animate-pulse">
+                    <i class="fas fa-exclamation-triangle text-yellow-300 mr-2 text-sm"></i>
+                    <span class="text-sm font-medium">Product May Have Issues</span>
+                </div>
+            }
         </div>
 
         <!-- Chat Messages -->
@@ -550,34 +547,40 @@
             .withUrl("/chathub")
             .build();
 
+        const currentUserId = "@ViewBag.CrmUserId";
         // Handle voice messages - Updated with confidence rates
         connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate) => {
             console.log("Voice message received:", { senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate });
-            addMessageToChat({
-                type: 'voice',
-                senderId,
-                filePath,
-                voiceEmotion,
-                textEmotion,
-                productImageUrl,
-                productTitle,
-                voiceConfidenceRate,
-                textConfidenceRate
-            });
+            if (currentUserId != senderId) {
+                addMessageToChat({
+                    type: 'voice',
+                    senderId,
+                    filePath,
+                    voiceEmotion,
+                    textEmotion,
+                    productImageUrl,
+                    productTitle,
+                    voiceConfidenceRate,
+                    textConfidenceRate
+                });
+            }
         });
 
         // Handle text messages - Updated with confidence rate
         connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate) => {
             console.log("Text message received:", { senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate });
-            addMessageToChat({
-                type: 'text',
-                senderId,
-                textContent,
-                productImageUrl,
-                productTitle,
-                emotion,
-                confidenceRate
-            });
+            if (currentUserId != senderId) {
+                addMessageToChat({
+                    type: 'text',
+                    senderId,
+                    textContent,
+                    productImageUrl,
+                    productTitle,
+                    emotion,
+                    confidenceRate
+                });
+            }
+            
         });
 
         // Function to get emotion emoji
@@ -721,6 +724,16 @@
         connection.start()
             .then(() => {
                 console.log("SignalR connection established successfully");
+
+                // Join the specific conversation group
+                const conversationId = "@ViewBag.CrmUserId" + "_" + "@ViewBag.CustomerId" + "_" + "@ViewBag.productId";
+                connection.invoke("JoinConversation", conversationId)
+                    .then(() => {
+                        console.log("Joined conversation:", conversationId);
+                    })
+                    .catch(err => {
+                        console.error("Failed to join conversation:", err);
+                    });
             })
             .catch(err => {
                 console.error("SignalR connection error:", err);

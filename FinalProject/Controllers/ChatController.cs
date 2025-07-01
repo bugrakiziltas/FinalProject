@@ -48,7 +48,10 @@ namespace FinalProject.Controllers
                 .ToListAsync();
 
             ViewBag.ChatWithUserId = chatWithUserId;
-            ViewBag.ProductId = productId;
+            ViewBag.CrmUserId=chatWithUserId.ToString();
+            ViewBag.CustomerId=userId;
+            ViewBag.productId = productId.ToString();
+            ViewBag.ProductId = productId.ToString();
             ViewBag.ProductTitle = productName;
             ViewBag.ProductImageUrl= "/Images/" + imageUrl;
             return View(messages);
@@ -211,15 +214,16 @@ namespace FinalProject.Controllers
             }
             _context.MessageModels.Add(voiceMessage);
             await _context.SaveChangesAsync();
-
             if (await _identityService.IsInRoleAsync(senderId, SD.Role_Cust))
             {
-                await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name, voiceMessage.voiceConfidenceRate, voiceMessage.textConfidenceRate);
+                var conversationId = $"{receiverId.ToString()}_{senderId}_{productId.ToString()}";
+                await _hubContext.Clients.Group(conversationId)
+                    .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, voiceMessage.VoiceEmotion, voiceMessage.TextEmotion, "/Images/" + product.ImageUrl, product.Name, voiceMessage.voiceConfidenceRate, voiceMessage.textConfidenceRate);
                 return Ok(new { success = true });
             }
-            await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, "", "", "/Images/" + product.ImageUrl, product.Name);
+            var conversationIdx = $"{senderId}_{receiverId.ToString()}_{productId.ToString()}";
+            await _hubContext.Clients.Group(conversationIdx)
+                   .SendAsync("ReceiveMessage", senderId, voiceMessage.AudioFilePath, "", "", "/Images/" + product.ImageUrl, product.Name);
             return Ok(new { success = true });
         }
         [HttpPost]
@@ -315,17 +319,17 @@ namespace FinalProject.Controllers
             }
             _context.MessageModels.Add(message);
             await _context.SaveChangesAsync();
-            if(message.textConfidenceRate != null)
+            if (message.textConfidenceRate != null)
             {
-                await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
-                          "/Images/" + product.ImageUrl, product.Name, message.TextEmotion, message.textConfidenceRate);
+                var conversationId = $"{receiverId.ToString()}_{senderId}_{productId.ToString()}";//9fd crm e75 cust f2 pro
+                await _hubContext.Clients.Group(conversationId)
+       .SendAsync("ReceiveTextMessage", senderId, message.TextContent, "/Images/" + product.ImageUrl, product.Name, message.TextEmotion, message.textConfidenceRate);
 
                 return Ok(new { success = true });
             }
-            await _hubContext.Clients.User(receiverId.ToString())
-                .SendAsync("ReceiveTextMessage", senderId, message.TextContent,
-                          "/Images/" + product.ImageUrl, product.Name, message.TextEmotion);
+            var conversationIdx = $"{senderId}_{receiverId.ToString()}_{productId.ToString()}";
+            await _hubContext.Clients.Group(conversationIdx)
+        .SendAsync("ReceiveTextMessage", senderId, message.TextContent, "/Images/" + product.ImageUrl, product.Name, message.TextEmotion);
 
             return Ok(new { success = true });
         }
@@ -409,7 +413,7 @@ namespace FinalProject.Controllers
         public async Task<IActionResult> ChatDetail(string userId, string productId)
         {
             var crmUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            ViewBag.CrmUserId = crmUserId;
+            ViewBag.CrmUserId = crmUserId;//9fd crm e75 cust f2 pro
             ViewBag.CustomerId = userId;
             ViewBag.productId = productId;
             if (crmUserId == null)

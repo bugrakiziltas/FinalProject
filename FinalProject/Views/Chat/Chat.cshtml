@@ -436,128 +436,147 @@
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chathub")
             .build();
-
+        const currentUserId = "@ViewBag.CustomerId";
         // Handle incoming voice messages
         connection.on("ReceiveMessage", (senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate) => {
             console.log("ReceiveMessage triggered", senderId, filePath, voiceEmotion, textEmotion, productImageUrl, productTitle, voiceConfidenceRate, textConfidenceRate);
-            const listItem = document.createElement("div");
-            listItem.className = "flex justify-start";
+            if (currentUserId != senderId) {
+                const listItem = document.createElement("div");
+                listItem.className = "flex justify-start";
 
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-3 shadow-sm";
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-3 shadow-sm";
 
-            // Add product info if available
-            if (productTitle) {
-                const productInfo = document.createElement("div");
-                productInfo.className = "flex items-center mb-2 space-x-3";
+                // Add product info if available
+                if (productTitle) {
+                    const productInfo = document.createElement("div");
+                    productInfo.className = "flex items-center mb-2 space-x-3";
 
-                if (productImageUrl) {
-                    const productImg = document.createElement("img");
-                    productImg.src = productImageUrl;
-                    productImg.alt = productTitle;
-                    productImg.className = "w-16 h-16 object-cover rounded-lg";
-                    productInfo.appendChild(productImg);
+                    if (productImageUrl) {
+                        const productImg = document.createElement("img");
+                        productImg.src = productImageUrl;
+                        productImg.alt = productTitle;
+                        productImg.className = "w-16 h-16 object-cover rounded-lg";
+                        productInfo.appendChild(productImg);
+                    }
+
+                    const productTitleDiv = document.createElement("div");
+                    const productTitleP = document.createElement("p");
+                    productTitleP.className = "font-semibold";
+                    productTitleP.textContent = productTitle;
+                    productTitleDiv.appendChild(productTitleP);
+                    productInfo.appendChild(productTitleDiv);
+
+                    messageDiv.appendChild(productInfo);
                 }
 
-                const productTitleDiv = document.createElement("div");
-                const productTitleP = document.createElement("p");
-                productTitleP.className = "font-semibold";
-                productTitleP.textContent = productTitle;
-                productTitleDiv.appendChild(productTitleP);
-                productInfo.appendChild(productTitleDiv);
+                const audio = document.createElement("audio");
+                audio.src = filePath;
+                audio.controls = true;
+                audio.className = "w-full mb-2";
 
-                messageDiv.appendChild(productInfo);
-            }
-
-            const audio = document.createElement("audio");
-            audio.src = filePath;
-            audio.controls = true;
-            audio.className = "w-full mb-2";
-
-            // Add emotion indicators if available
-            if (voiceEmotion || textEmotion) {
-                const emotionDiv = document.createElement("div");
-                emotionDiv.className = "text-xs text-gray-600 mb-1";
-                let emotionText = "";
-                if (voiceEmotion && textEmotion) {
-                    emotionText = `Voice: ${voiceEmotion}, Text: ${textEmotion}`;
-                } else {
-                    emotionText = `Emotion: ${voiceEmotion || textEmotion}`;
+                // Add emotion indicators if available
+                if (voiceEmotion || textEmotion) {
+                    const emotionDiv = document.createElement("div");
+                    emotionDiv.className = "text-xs text-gray-600 mb-1";
+                    let emotionText = "";
+                    if (voiceEmotion && textEmotion) {
+                        emotionText = `Voice: ${voiceEmotion}, Text: ${textEmotion}`;
+                    } else {
+                        emotionText = `Emotion: ${voiceEmotion || textEmotion}`;
+                    }
+                    emotionDiv.textContent = emotionText;
+                    messageDiv.appendChild(emotionDiv);
                 }
-                emotionDiv.textContent = emotionText;
-                messageDiv.appendChild(emotionDiv);
+
+                const timestamp = document.createElement("span");
+                timestamp.className = "text-xs opacity-70 block text-right";
+                timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                messageDiv.appendChild(audio);
+                messageDiv.appendChild(timestamp);
+                listItem.appendChild(messageDiv);
+
+                messagesList.appendChild(listItem);
+                messagesList.scrollTop = messagesList.scrollHeight;
             }
-
-            const timestamp = document.createElement("span");
-            timestamp.className = "text-xs opacity-70 block text-right";
-            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            messageDiv.appendChild(audio);
-            messageDiv.appendChild(timestamp);
-            listItem.appendChild(messageDiv);
-
-            messagesList.appendChild(listItem);
-            messagesList.scrollTop = messagesList.scrollHeight;
+            
         });
 
         // Handle incoming text messages
         connection.on("ReceiveTextMessage", (senderId, textContent, productImageUrl, productTitle, emotion, confidenceRate) => {
             console.log("ReceiveTextMessage triggered", textContent, productImageUrl, productTitle, emotion, confidenceRate);
-            const listItem = document.createElement("div");
-            listItem.className = "flex justify-start";
+            if (currentUserId != senderId) {
+                const listItem = document.createElement("div");
+                listItem.className = "flex justify-start";
 
-            const messageDiv = document.createElement("div");
-            messageDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-3 shadow-sm";
+                const messageDiv = document.createElement("div");
+                messageDiv.className = "bg-gray-200 text-black rounded-r-2xl rounded-bl-2xl max-w-[80%] p-3 shadow-sm";
 
-            // Add product info if available
-            if (productTitle) {
-                const productInfo = document.createElement("div");
-                productInfo.className = "flex items-center mb-2 space-x-3";
+                // Add product info if available
+                if (productTitle) {
+                    const productInfo = document.createElement("div");
+                    productInfo.className = "flex items-center mb-2 space-x-3";
 
-                if (productImageUrl) {
-                    const productImg = document.createElement("img");
-                    productImg.src = productImageUrl;
-                    productImg.alt = productTitle;
-                    productImg.className = "w-16 h-16 object-cover rounded-lg";
-                    productInfo.appendChild(productImg);
+                    if (productImageUrl) {
+                        const productImg = document.createElement("img");
+                        productImg.src = productImageUrl;
+                        productImg.alt = productTitle;
+                        productImg.className = "w-16 h-16 object-cover rounded-lg";
+                        productInfo.appendChild(productImg);
+                    }
+
+                    const productTitleDiv = document.createElement("div");
+                    const productTitleP = document.createElement("p");
+                    productTitleP.className = "font-semibold";
+                    productTitleP.textContent = productTitle;
+                    productTitleDiv.appendChild(productTitleP);
+                    productInfo.appendChild(productTitleDiv);
+
+                    messageDiv.appendChild(productInfo);
                 }
 
-                const productTitleDiv = document.createElement("div");
-                const productTitleP = document.createElement("p");
-                productTitleP.className = "font-semibold";
-                productTitleP.textContent = productTitle;
-                productTitleDiv.appendChild(productTitleP);
-                productInfo.appendChild(productTitleDiv);
+                // Add emotion indicator if available
+                if (emotion) {
+                    const emotionDiv = document.createElement("div");
+                    emotionDiv.className = "text-xs text-gray-600 mb-1";
+                    emotionDiv.textContent = `Detected emotion: ${emotion}`;
+                    messageDiv.appendChild(emotionDiv);
+                }
 
-                messageDiv.appendChild(productInfo);
+                const textParagraph = document.createElement("p");
+                textParagraph.className = "mb-2";
+                textParagraph.textContent = textContent;
+
+                const timestamp = document.createElement("span");
+                timestamp.className = "text-xs opacity-70 block text-right";
+                timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                messageDiv.appendChild(textParagraph);
+                messageDiv.appendChild(timestamp);
+                listItem.appendChild(messageDiv);
+
+                messagesList.appendChild(listItem);
+                messagesList.scrollTop = messagesList.scrollHeight;
             }
-
-            // Add emotion indicator if available
-            if (emotion) {
-                const emotionDiv = document.createElement("div");
-                emotionDiv.className = "text-xs text-gray-600 mb-1";
-                emotionDiv.textContent = `Detected emotion: ${emotion}`;
-                messageDiv.appendChild(emotionDiv);
-            }
-
-            const textParagraph = document.createElement("p");
-            textParagraph.className = "mb-2";
-            textParagraph.textContent = textContent;
-
-            const timestamp = document.createElement("span");
-            timestamp.className = "text-xs opacity-70 block text-right";
-            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            messageDiv.appendChild(textParagraph);
-            messageDiv.appendChild(timestamp);
-            listItem.appendChild(messageDiv);
-
-            messagesList.appendChild(listItem);
-            messagesList.scrollTop = messagesList.scrollHeight;
+            
         });
 
         // Start SignalR connection
-        connection.start().catch(err => console.error('SignalR connection error:', err));
+        connection.start()
+            .then(() => {
+                console.log("SignalR connection established successfully");
+
+                // Join the specific conversation group
+                const conversationId = "@ViewBag.CrmUserId" + "_" + "@ViewBag.CustomerId" + "_" + "@ViewBag.productId";
+                connection.invoke("JoinConversation", conversationId)
+                    .then(() => {
+                        console.log("Joined conversation:", conversationId);
+                    })
+                    .catch(err => {
+                        console.error("Failed to join conversation:", err);
+                    });
+            }).catch(err => console.error('SignalR connection error:', err));
 
         // Auto-scroll to bottom on page load
         window.onload = function () {
