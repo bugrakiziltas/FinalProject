@@ -317,6 +317,10 @@ namespace FinalProject.Controllers
                     Console.WriteLine("API is not available. Please check if the Flask service is running.");
                 }
             }
+            if (textContent == "Hi"  || textContent == "hi" || textContent == "Hey" || textContent == "hey")
+            {
+                message.TextEmotion = "joy";
+            }
             _context.MessageModels.Add(message);
             await _context.SaveChangesAsync();
             if (message.textConfidenceRate != null)

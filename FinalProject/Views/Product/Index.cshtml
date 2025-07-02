@@ -15,7 +15,7 @@
                     <div class="card-body text-center d-flex flex-column">
                         <h5 class="card-title">@product.Name</h5>
                         <p class="card-text">@product.Description</p>
-                        <p class="fw-bold">@product.Price.ToString("c")</p>
+                        <p class="fw-bold">$@product.Price</p>
                         <a asp-controller="Product" asp-action="ProductDetailPage" asp-route-id="@product.Id" class="btn btn-primary mb-2">Detail</a>
              @*            <form asp-controller="Product" asp-action="AddToCart" method="post" class="mt-auto">
                             <button type="submit" class="btn btn-success w-100">Add To Cart</button>
