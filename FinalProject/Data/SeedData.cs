@@ -235,7 +235,7 @@ namespace FinalProject.Data
             {
                 new Product
                 {
-                    Name = "Man's Hat",
+                    Name = "Hat for Man",
                     Description = "",
                     Price = 129.99M,
                     ImageUrl = "product-item-1.jpg",
@@ -245,7 +245,7 @@ namespace FinalProject.Data
                 },
                 new Product
                 {
-                    Name = "Woman's Bag",  
+                    Name = "Bag for Woman",  
                     Description = "",
                     Price = 49.99M,
                     ImageUrl = "product-item-7.jpg",
@@ -255,7 +255,7 @@ namespace FinalProject.Data
                 },
                 new Product
                 {
-                    Name = "Woman's Hat",
+                    Name = "Hat for Woman",
                     Description = "",
                     Price = 39.99M,
                     ImageUrl = "product-item-10.jpg",
@@ -265,20 +265,10 @@ namespace FinalProject.Data
                 },
                 new Product
                 {
-                    Name = "Men's T-Shirt",
+                    Name = "T-Shirt for Men",
                     Description = "",
                     Price = 89.99M,
                     ImageUrl = "product-item-4.jpg",
-                    CreatedByUserId = Guid.Parse(adminUser.Id),
-                    IdentityUserId = Guid.Parse(adminUser.Id),
-                    CreatedOn = DateTimeOffset.UtcNow
-                },
-                new Product
-                {
-                    Name = "Men Coat",
-                    Description = "",
-                    Price = 159.99M,
-                    ImageUrl = "banner-image-4.jpg",
                     CreatedByUserId = Guid.Parse(adminUser.Id),
                     IdentityUserId = Guid.Parse(adminUser.Id),
                     CreatedOn = DateTimeOffset.UtcNow
@@ -349,10 +339,6 @@ namespace FinalProject.Data
 
             productList[7].Category = categoryList[1];
             productList[7].CategoryId = categoryList[1].Id;
-
-            productList[8].Category = categoryList[1];
-            productList[8].CategoryId = categoryList[1].Id;
-
 
             context.Categories.AddRange(categoryList);
             context.Products.AddRange(productList);

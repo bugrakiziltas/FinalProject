@@ -200,23 +200,91 @@
             </div>
 
             <!-- Voice Message Form -->
-            <form id="voiceForm" enctype="multipart/form-data" asp-controller="Chat" asp-action="UploadVoiceMessage" method="post" class="flex items-center space-x-2">
+            <form id="voiceForm" enctype="multipart/form-data" asp-controller="Chat" asp-action="UploadVoiceMessage" method="post" class="space-y-3">
                 <input type="hidden" name="receiverId" value="@ViewBag.CustomerId" />
-                <input type="file" name="audioFile" accept="audio/*" id="audioInput" class="hidden">
                 <input type="hidden" name="productId" value="@ViewBag.productId" />
-                <button type="button" id="startRecord" class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition flex items-center justify-center">
-                    <i class="fas fa-microphone"></i>
-                </button>
-                <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition opacity-50 flex items-center justify-center">
-                    <i class="fas fa-stop"></i>
-                </button>
-                <div class="flex-grow bg-gray-100 rounded-full h-2 relative">
-                    <div id="recordingIndicator" class="absolute inset-0 bg-red-400 rounded-full w-0 transition-all duration-200"></div>
+
+                <!-- Voice Message Options Tabs -->
+                <div class="flex mb-3 bg-gray-100 rounded-lg p-1">
+                    <button type="button" id="recordTabBtn" class="flex-1 py-2 px-3 text-sm font-medium rounded-md bg-blue-500 text-white transition-all">
+                        <i class="fas fa-microphone mr-1"></i> Record
+                    </button>
+                    <button type="button" id="uploadTabBtn" class="flex-1 py-2 px-3 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-all">
+                        <i class="fas fa-upload mr-1"></i> Upload File
+                    </button>
                 </div>
-                <button type="submit" id="sendButton" disabled class="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 transition opacity-50 flex items-center justify-center">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+
+                <!-- Recording Section -->
+                <div id="recordingSection" class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="startRecord" class="bg-green-500 text-white p-3 rounded-full hover:bg-green-600 transition flex items-center justify-center">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <button type="button" id="stopRecord" disabled class="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition opacity-50 flex items-center justify-center">
+                            <i class="fas fa-stop"></i>
+                        </button>
+                        <div class="flex-grow bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                            <div id="recordingIndicator" class="absolute inset-0 bg-gradient-to-r from-red-400 to-red-600 rounded-full w-0 transition-all duration-200"></div>
+                        </div>
+                        <span id="recordingTime" class="text-sm text-gray-600 min-w-[60px]">00:00</span>
+                    </div>
+
+                    <!-- Recording Preview -->
+                    <div id="recordingPreview" class="hidden bg-gray-50 p-3 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-volume-up text-blue-500"></i>
+                                <span class="text-sm text-gray-700">Recording ready to send</span>
+                            </div>
+                            <button type="button" id="deleteRecording" class="text-red-500 hover:text-red-700 text-sm">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </button>
+                        </div>
+                        <audio id="recordingPlayback" controls class="w-full mt-2 h-8">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="uploadSection" class="hidden space-y-3">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                        <input type="file" name="audioFile" accept="audio/*" id="audioFileInput" class="hidden">
+                        <div id="uploadPrompt">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-600 mb-2">Click to upload an audio file</p>
+                            <button type="button" id="selectFileBtn" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                Select Audio File
+                            </button>
+                        </div>
+
+                        <!-- File Preview -->
+                        <div id="filePreview" class="hidden">
+                            <div class="flex items-center justify-center space-x-3 mb-3">
+                                <i class="fas fa-file-audio text-blue-500 text-2xl"></i>
+                                <div class="text-left">
+                                    <p id="fileName" class="font-medium text-gray-800"></p>
+                                    <p id="fileSize" class="text-sm text-gray-500"></p>
+                                </div>
+                            </div>
+                            <audio id="uploadedAudioPreview" controls class="w-full mb-3 h-8">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <button type="button" id="removeFile" class="text-red-500 hover:text-red-700 text-sm">
+                                <i class="fas fa-times mr-1"></i> Remove File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Send Button -->
+                <div class="flex justify-end">
+                    <button type="submit" id="sendVoiceButton" disabled class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition opacity-50 flex items-center">
+                        <i class="fas fa-paper-plane mr-2"></i> Send Voice Message
+                    </button>
+                </div>
             </form>
+
 
             <!-- Text Message Form -->
             <form id="textForm" asp-controller="Chat" asp-action="SendTextMessage" method="post" class="hidden">
@@ -751,6 +819,265 @@
                 textForm.dispatchEvent(new Event('submit'));
             }
         });
+        (function () {
+            // Elements
+            const recordTabBtn = document.getElementById('recordTabBtn');
+            const uploadTabBtn = document.getElementById('uploadTabBtn');
+            const recordingSection = document.getElementById('recordingSection');
+            const uploadSection = document.getElementById('uploadSection');
+            const audioFileInput = document.getElementById('audioFileInput');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const uploadPrompt = document.getElementById('uploadPrompt');
+            const filePreview = document.getElementById('filePreview');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const uploadedAudioPreview = document.getElementById('uploadedAudioPreview');
+            const removeFile = document.getElementById('removeFile');
+            const sendVoiceButton = document.getElementById('sendVoiceButton');
+            const startRecord = document.getElementById('startRecord');
+            const stopRecord = document.getElementById('stopRecord');
+            const recordingPreview = document.getElementById('recordingPreview');
+            const recordingPlayback = document.getElementById('recordingPlayback');
+            const deleteRecording = document.getElementById('deleteRecording');
+            const recordingIndicator = document.getElementById('recordingIndicator');
+            const recordingTime = document.getElementById('recordingTime');
+
+            // Recording variables
+            let mediaRecorder;
+            let audioChunks = [];
+            let audioBlob = null;
+            let recordingInterval;
+            let recordingStartTime;
+            let currentMode = 'record'; // 'record' or 'upload'
+
+            // Tab switching
+            recordTabBtn.addEventListener('click', () => switchToRecord());
+            uploadTabBtn.addEventListener('click', () => switchToUpload());
+
+            function switchToRecord() {
+                currentMode = 'record';
+                recordingSection.classList.remove('hidden');
+                uploadSection.classList.add('hidden');
+                recordTabBtn.classList.add('bg-blue-500', 'text-white');
+                recordTabBtn.classList.remove('text-gray-600');
+                uploadTabBtn.classList.remove('bg-blue-500', 'text-white');
+                uploadTabBtn.classList.add('text-gray-600');
+                checkSendButtonState();
+            }
+
+            function switchToUpload() {
+                currentMode = 'upload';
+                uploadSection.classList.remove('hidden');
+                recordingSection.classList.add('hidden');
+                uploadTabBtn.classList.add('bg-blue-500', 'text-white');
+                uploadTabBtn.classList.remove('text-gray-600');
+                recordTabBtn.classList.remove('bg-blue-500', 'text-white');
+                recordTabBtn.classList.add('text-gray-600');
+                checkSendButtonState();
+            }
+
+            // File upload handling
+            selectFileBtn.addEventListener('click', () => {
+                audioFileInput.click();
+            });
+
+            audioFileInput.addEventListener('change', handleFileSelect);
+
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+
+                // Validate file size (10MB limit)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    alert('File size must be less than 10MB');
+                    audioFileInput.value = '';
+                    return;
+                }
+
+                // Show file preview
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+
+                // Create audio preview
+                const audioURL = URL.createObjectURL(file);
+                uploadedAudioPreview.src = audioURL;
+
+                // Switch to preview mode
+                uploadPrompt.classList.add('hidden');
+                filePreview.classList.remove('hidden');
+
+                checkSendButtonState();
+            }
+
+            removeFile.addEventListener('click', () => {
+                audioFileInput.value = '';
+                uploadPrompt.classList.remove('hidden');
+                filePreview.classList.add('hidden');
+                URL.revokeObjectURL(uploadedAudioPreview.src);
+                uploadedAudioPreview.src = '';
+                checkSendButtonState();
+            });
+
+            // Recording functionality
+            startRecord.addEventListener('click', startRecording);
+            stopRecord.addEventListener('click', stopRecording);
+            deleteRecording.addEventListener('click', () => {
+                audioBlob = null;
+                audioChunks = [];
+                recordingPreview.classList.add('hidden');
+                URL.revokeObjectURL(recordingPlayback.src);
+                recordingPlayback.src = '';
+                checkSendButtonState();
+            });
+
+            async function startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+                    mediaRecorder.onstop = () => {
+                        audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                        const audioURL = URL.createObjectURL(audioBlob);
+                        recordingPlayback.src = audioURL;
+                        recordingPreview.classList.remove('hidden');
+                        checkSendButtonState();
+                    };
+
+                    mediaRecorder.start();
+                    recordingStartTime = Date.now();
+
+                    // Update UI
+                    startRecord.disabled = true;
+                    startRecord.classList.add('opacity-50');
+                    stopRecord.disabled = false;
+                    stopRecord.classList.remove('opacity-50');
+
+                    // Start recording timer and indicator
+                    recordingInterval = setInterval(updateRecordingIndicator, 100);
+
+                } catch (err) {
+                    console.error('Error accessing microphone:', err);
+                    alert('Could not access microphone. Please check permissions.');
+                }
+            }
+
+            function stopRecording() {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                    mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                }
+
+                // Reset UI
+                startRecord.disabled = false;
+                startRecord.classList.remove('opacity-50');
+                stopRecord.disabled = true;
+                stopRecord.classList.add('opacity-50');
+
+                clearInterval(recordingInterval);
+                recordingIndicator.style.width = '0';
+                recordingTime.textContent = '00:00';
+            }
+
+            function updateRecordingIndicator() {
+                const elapsed = Date.now() - recordingStartTime;
+                const seconds = Math.floor(elapsed / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+
+                recordingTime.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+
+                // Animate indicator
+                const progress = (elapsed % 2000) / 2000 * 100;
+                recordingIndicator.style.width = `${20 + progress * 0.8}%`;
+            }
+
+            function checkSendButtonState() {
+                let canSend = false;
+
+                if (currentMode === 'record' && audioBlob) {
+                    canSend = true;
+                } else if (currentMode === 'upload' && audioFileInput.files.length > 0) {
+                    canSend = true;
+                }
+
+                sendVoiceButton.disabled = !canSend;
+                if (canSend) {
+                    sendVoiceButton.classList.remove('opacity-50');
+                } else {
+                    sendVoiceButton.classList.add('opacity-50');
+                }
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Form submission handling
+            document.getElementById('voiceForm').addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const formData = new FormData();
+                formData.append('receiverId', document.querySelector('input[name="receiverId"]').value);
+                formData.append('productId', document.querySelector('input[name="productId"]').value);
+
+                let audioURL = null;
+
+                if (currentMode === 'record' && audioBlob) {
+                    const file = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
+                    formData.append("audioFile", file);
+                    audioURL = URL.createObjectURL(audioBlob);
+                } else if (currentMode === 'upload' && audioFileInput.files.length > 0) {
+                    formData.append("audioFile", audioFileInput.files[0]);
+                    audioURL = URL.createObjectURL(audioFileInput.files[0]);
+                } else {
+                    alert('Please record or select an audio file first.');
+                    return;
+                }
+
+                try {
+                    // Show message immediately in sender's UI
+                    if (audioURL) {
+                        addMessageToUI(true, null, audioURL, null, null, null, null);
+                    }
+
+                    // Send via AJAX
+                    const response = await fetch('/chat/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        // Reset form state
+                        if (currentMode === 'record') {
+                            audioBlob = null;
+                            audioChunks = [];
+                            recordingPreview.classList.add('hidden');
+                            URL.revokeObjectURL(recordingPlayback.src);
+                        } else {
+                            audioFileInput.value = '';
+                            uploadPrompt.classList.remove('hidden');
+                            filePreview.classList.add('hidden');
+                            URL.revokeObjectURL(uploadedAudioPreview.src);
+                        }
+
+                        checkSendButtonState();
+                    } else {
+                        console.error('Error sending voice message');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+
+        })();
     </script>
 </body>
 </html>
